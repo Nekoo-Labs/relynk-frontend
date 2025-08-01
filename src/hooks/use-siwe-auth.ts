@@ -4,7 +4,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useAccount, useSignMessage, useDisconnect } from "wagmi";
 import { SiweMessage } from "siwe";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 export function useSiweAuth() {
   const { data: session, status } = useSession();
@@ -13,8 +13,10 @@ export function useSiweAuth() {
   const { disconnect } = useDisconnect();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [autoSignInAttempted, setAutoSignInAttempted] = useState(false);
+  const signInRef = useRef<(() => Promise<void>) | null>(null);
 
-  const isAuthenticated = !!session?.address;
+  const isAuthenticated = !!session?.address && session.address.toLowerCase() === address?.toLowerCase();
   const isConnecting = status === "loading";
 
   // Debug logging
@@ -25,14 +27,15 @@ export function useSiweAuth() {
       address,
       isConnected,
       isAuthenticated,
-      sessionAddress: session?.address
+      sessionAddress: session?.address,
+      autoSignInAttempted
     });
-  }, [session, status, address, isConnected, isAuthenticated]);
+  }, [session, status, address, isConnected, isAuthenticated, autoSignInAttempted]);
 
-  const signInWithEthereum = async () => {
+  const signInWithEthereum = useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       if (!address || !isConnected) {
         throw new Error("Wallet not connected");
       }
@@ -49,7 +52,7 @@ export function useSiweAuth() {
       });
 
       const messageString = message.prepareMessage();
-      
+
       // Sign the message
       const signature = await signMessageAsync({
         message: messageString,
@@ -65,7 +68,8 @@ export function useSiweAuth() {
       console.log("Sign in result:", result);
 
       if (result?.ok) {
-        router.push("/dashboard");
+        // Don't automatically redirect to dashboard, let the calling component handle it
+        console.log("SIWE authentication successful");
       } else {
         throw new Error("Authentication failed");
       }
@@ -75,15 +79,62 @@ export function useSiweAuth() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address, isConnected, chainId, signMessageAsync]);
+
+  // Store the function in ref to avoid dependency issues
+  signInRef.current = signInWithEthereum;
+
+  // Auto-trigger SIWE authentication when wallet is connected but not authenticated
+  useEffect(() => {
+    const shouldAutoSignIn =
+      isConnected &&
+      address &&
+      !isAuthenticated &&
+      !isLoading &&
+      !autoSignInAttempted &&
+      status !== "loading";
+
+    if (shouldAutoSignIn && signInRef.current) {
+      console.log("Auto-triggering SIWE authentication...");
+      setAutoSignInAttempted(true);
+      signInRef.current().catch((error) => {
+        console.error("Auto SIWE sign-in failed:", error);
+        // Reset the flag so user can try again manually
+        setAutoSignInAttempted(false);
+      });
+    }
+  }, [isConnected, address, isAuthenticated, isLoading, autoSignInAttempted, status]);
+
+  // Reset auto sign-in flag when wallet disconnects or address changes
+  useEffect(() => {
+    if (!isConnected || !address) {
+      setAutoSignInAttempted(false);
+    }
+  }, [isConnected, address]);
+
+  // Handle session/address mismatch
+  useEffect(() => {
+    if (session?.address && address && session.address.toLowerCase() !== address.toLowerCase()) {
+      console.log("Session address mismatch, signing out...", {
+        sessionAddress: session.address,
+        walletAddress: address
+      });
+      // Sign out the old session
+      signOut({ redirect: false });
+      setAutoSignInAttempted(false);
+    }
+  }, [session?.address, address]);
 
   const logout = async () => {
     // Sign out from NextAuth session
     await signOut({ redirect: false });
-    
+
     // Disconnect the wallet
     disconnect();
-    
+
+    // Reset auto sign-in flag
+    setAutoSignInAttempted(false);
+
     // Redirect to home page
     router.push("/");
   };

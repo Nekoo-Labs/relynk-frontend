@@ -33,6 +33,11 @@ const menuItems = [
     icon: Home,
   },
   {
+    title: "Profile",
+    url: "/dashboard/profile",
+    icon: User,
+  },
+  {
     title: "Links",
     url: "/dashboard/links",
     icon: LinkIcon,

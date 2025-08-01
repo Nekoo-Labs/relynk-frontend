@@ -5,6 +5,12 @@ import { DashboardLayout } from "@/components/dashboard-layout";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { DashboardWelcomeCard } from "@/components/dashboard-welcome-card";
+import { DashboardUsernameSetup } from "@/components/dashboard-username-setup";
+import { useAccount } from "wagmi";
+import { useProfileRegistry } from "@/hooks/use-profile-registry";
+import { useSearchParams } from "next/navigation";
 import {
   BarChart3,
   CreditCard,
@@ -13,6 +19,8 @@ import {
   Plus,
   TrendingUp,
   Users,
+  User,
+  ExternalLink,
 } from "lucide-react";
 
 // Mock data for the dashboard
@@ -51,6 +59,23 @@ const mockRecentLinks = [
 ];
 
 export default function DashboardPage() {
+  const { address } = useAccount();
+  const { useGetProfileByOwner } = useProfileRegistry();
+  const searchParams = useSearchParams();
+
+  // Get user's profile
+  const { data: profileResult } = useGetProfileByOwner(address!);
+  const [profile, username] = profileResult || [null, ''];
+  const hasProfile = !!profile;
+
+  // Check if user has skipped setup
+  const hasSkippedSetup = searchParams.get('skipSetup') === 'true';
+
+  // Show username setup page if user doesn't have profile and hasn't skipped
+  if (!hasProfile && !hasSkippedSetup) {
+    return <DashboardUsernameSetup />;
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -64,13 +89,50 @@ export default function DashboardPage() {
               Here&apos;s what&apos;s happening with your links today~ ✨
             </p>
           </div>
-          <Link href="/dashboard/links/create">
-            <Button className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow glow-hover hover:scale-105 transition-all duration-300">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Link
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            {hasProfile && (
+              <Link href={`/${username}`} target="_blank">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  View Profile
+                </Button>
+              </Link>
+            )}
+            <Link href="/dashboard/links/create">
+              <Button className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow glow-hover hover:scale-105 transition-all duration-300">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Link
+              </Button>
+            </Link>
+          </div>
         </div>
+
+        {/* Username Setup Welcome Card - only show if user has skipped setup */}
+        {hasSkippedSetup && (
+          <DashboardWelcomeCard
+            hasProfile={hasProfile}
+            username={username}
+            onSkip={() => {
+              // User has already skipped, so just hide the card
+              window.history.replaceState({}, '', '/dashboard');
+            }}
+          />
+        )}
+
+        {/* Profile Status Badge */}
+        {hasProfile && (
+          <div className="flex items-center gap-2">
+            <Badge variant="default" className="flex items-center gap-1">
+              <User className="w-3 h-3" />
+              Profile Active: @{username}
+            </Badge>
+            <Link href="/dashboard/profile">
+              <Badge variant="outline" className="hover:bg-secondary cursor-pointer">
+                Manage Profile
+              </Badge>
+            </Link>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

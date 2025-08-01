@@ -24,8 +24,13 @@ export function SiweAuthGuard({ children }: SiweAuthGuardProps) {
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main"></div>
             <p className="text-foreground/60 text-center">
-              {isLoading ? "Signing in..." : "Connecting..."}
+              {isLoading ? "🔐 Authenticating with your wallet..." : "🔗 Connecting to wallet..."}
             </p>
+            {isLoading && (
+              <p className="text-sm text-foreground/40 text-center">
+                Please sign the message in your wallet to continue ✨
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -43,32 +48,37 @@ export function SiweAuthGuard({ children }: SiweAuthGuardProps) {
                 💖 Welcome to Paylynk!
               </h2>
               <p className="text-foreground/60">
-                {!isConnected 
+                {!isConnected
                   ? "Please connect your wallet to access the dashboard~ ✨"
-                  : "Please sign the message to authenticate with your wallet~ ✨"
+                  : "Authentication in progress... If this takes too long, click below to sign manually~ ✨"
                 }
               </p>
             </div>
-            
+
             {!isConnected ? (
               <ConnectWallet className="w-full glow-hover hover:scale-105 transition-all duration-300" />
             ) : (
-              <Button
-                onClick={signInWithEthereum}
-                disabled={isLoading}
-                className="w-full glow-hover hover:scale-105 transition-all duration-300 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Signing in...
-                  </>
-                ) : (
-                  "🌸 Sign in with Ethereum"
-                )}
-              </Button>
+              <div className="w-full space-y-3">
+                <Button
+                  onClick={signInWithEthereum}
+                  disabled={isLoading}
+                  className="w-full glow-hover hover:scale-105 transition-all duration-300 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Signing in...
+                    </>
+                  ) : (
+                    "🌸 Sign in with Ethereum"
+                  )}
+                </Button>
+                <p className="text-xs text-foreground/50 text-center">
+                  Authentication should happen automatically when you connect your wallet
+                </p>
+              </div>
             )}
-            
+
             <p className="text-sm text-foreground/40 mt-4 text-center">
               We use Sign-In with Ethereum (SIWE) for secure authentication! 🔐
             </p>

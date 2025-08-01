@@ -5,14 +5,19 @@ import ConnectWallet from "./ui/connect-wallet";
 import { useSiweAuth } from "@/hooks/use-siwe-auth";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
 
 export default function Navbar() {
-  const { isAuthenticated } = useSiweAuth();
+  const { isAuthenticated, isLoading } = useSiweAuth();
+  const { isConnected } = useAccount();
   const router = useRouter();
 
   const handleDashboardClick = () => {
     router.push("/dashboard");
   };
+
+  // Show dashboard button if authenticated OR if wallet is connected (authentication might be in progress)
+  const showDashboardButton = isAuthenticated || (isConnected && !isLoading);
 
   return (
     <nav className="fixed top-0 left-0 z-50 w-full pt-4">
@@ -21,12 +26,20 @@ export default function Navbar() {
           <CardTitle className="text-white">Paylynk</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-3">
-          {isAuthenticated && (
+          {showDashboardButton && (
             <Button
               onClick={handleDashboardClick}
-              className="bg-white text-main shadow-rose-200 border-rose-200 border hover:scale-105 transition-all duration-300"
+              disabled={isLoading}
+              className="bg-white text-main shadow-rose-200 border-rose-200 border hover:scale-105 transition-all duration-300 disabled:opacity-50"
             >
-              Dashboard ✨
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-main mr-2"></div>
+                  Signing in...
+                </>
+              ) : (
+                "Dashboard ✨"
+              )}
             </Button>
           )}
           <ConnectWallet className="bg-white text-main shadow-rose-200 border-rose-200 border hover:scale-105 transition-all duration-300" />
