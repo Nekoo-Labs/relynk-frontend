@@ -11,7 +11,7 @@ export const API_CONFIG = {
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 // API Response wrapper
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   success: boolean;
   message?: string;
@@ -24,7 +24,7 @@ export interface ApiError {
   message: string;
   status: number;
   code?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 // Request configuration
@@ -40,13 +40,13 @@ export interface ApiRequestConfig extends Omit<RequestInit, "method"> {
 export class ApiRequestError extends Error {
   public status: number;
   public code?: string;
-  public details?: Record<string, any>;
+  public details?: Record<string, unknown>;
 
   constructor(
     message: string,
     status: number,
     code?: string,
-    details?: Record<string, any>
+    details?: Record<string, unknown>
   ) {
     super(message);
     this.name = "ApiRequestError";
@@ -109,7 +109,7 @@ async function getAuthToken(): Promise<string | null> {
 }
 
 // Main API fetch function
-export async function apiFetch<T = any>(
+export async function apiFetch<T = unknown>(
   endpoint: string,
   options: ApiRequestConfig & { method?: HttpMethod } = {}
 ): Promise<ApiResponse<T>> {
@@ -169,7 +169,7 @@ export async function apiFetch<T = any>(
       const isJson = contentType?.includes("application/json");
 
       if (!response.ok) {
-        let errorData: any = {};
+        let errorData: Record<string, unknown> = {};
 
         if (isJson) {
           try {
@@ -180,12 +180,12 @@ export async function apiFetch<T = any>(
         }
 
         throw new ApiRequestError(
-          errorData.message ||
-            errorData.error ||
+          (errorData.message as string) ||
+            (errorData.error as string) ||
             `HTTP ${response.status}: ${response.statusText}`,
           response.status,
-          errorData.code,
-          errorData.details
+          errorData.code as string,
+          errorData.details as Record<string, unknown>
         );
       }
 
@@ -249,28 +249,28 @@ export async function apiFetch<T = any>(
 
 // Convenience methods for different HTTP verbs
 export const api = {
-  get: <T = any>(endpoint: string, config?: Omit<ApiRequestConfig, "method">) =>
+  get: <T = unknown>(endpoint: string, config?: Omit<ApiRequestConfig, "method">) =>
     apiFetch<T>(endpoint, { ...config, method: "GET" }),
 
-  post: <T = any>(
+  post: <T = unknown>(
     endpoint: string,
-    data?: any,
+    data?: Record<string, unknown>,
     config?: Omit<ApiRequestConfig, "method">
-  ) => apiFetch<T>(endpoint, { ...config, method: "POST", body: data }),
+  ) => apiFetch<T>(endpoint, { ...config, method: "POST", body: data as unknown as BodyInit }),
 
-  put: <T = any>(
+  put: <T = unknown>(
     endpoint: string,
-    data?: any,
+    data?: Record<string, unknown>,
     config?: Omit<ApiRequestConfig, "method">
-  ) => apiFetch<T>(endpoint, { ...config, method: "PUT", body: data }),
+  ) => apiFetch<T>(endpoint, { ...config, method: "PUT", body: data as unknown as BodyInit }),
 
-  patch: <T = any>(
+  patch: <T = unknown>(
     endpoint: string,
-    data?: any,
+    data?: Record<string, unknown>,
     config?: Omit<ApiRequestConfig, "method">
-  ) => apiFetch<T>(endpoint, { ...config, method: "PATCH", body: data }),
+  ) => apiFetch<T>(endpoint, { ...config, method: "PATCH", body: data as unknown as BodyInit }),
 
-  delete: <T = any>(
+  delete: <T = unknown>(
     endpoint: string,
     config?: Omit<ApiRequestConfig, "method">
   ) => apiFetch<T>(endpoint, { ...config, method: "DELETE" }),
@@ -317,7 +317,7 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   all: ["api"] as const,
   lists: () => [...queryKeys.all, "list"] as const,
-  list: (filters: Record<string, any>) =>
+  list: (filters: Record<string, unknown>) =>
     [...queryKeys.lists(), filters] as const,
   details: () => [...queryKeys.all, "detail"] as const,
   detail: (id: string | number) => [...queryKeys.details(), id] as const,
@@ -325,7 +325,7 @@ export const queryKeys = {
   // Profile-specific keys
   profiles: {
     all: () => [...queryKeys.all, "profiles"] as const,
-    list: (filters?: Record<string, any>) =>
+    list: (filters?: Record<string, unknown>) =>
       [...queryKeys.profiles.all(), "list", filters] as const,
     detail: (address: string) =>
       [...queryKeys.profiles.all(), "detail", address] as const,

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { usePaymentLinks } from "./use-payment-links";
 import {
@@ -8,7 +9,39 @@ import {
   LinkType,
   DashboardData,
 } from "@/types/relynk";
-import { Address } from "viem";
+import { Address, formatUnits } from "viem";
+import { fetchCreatorAnalytics, type CreatorAnalyticsData } from "@/services/graphql";
+import { SUPPORTED_TOKENS } from "@/lib/contracts";
+
+// Convert SUPPORTED_TOKENS object to array for easier iteration
+const SUPPORTED_TOKENS_ARRAY = Object.values(SUPPORTED_TOKENS);
+
+// Helper function to format token amounts
+function formatTokenAmount(amount: string, tokenAddress: string): string {
+  const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
+  if (!token) return "0";
+  
+  return formatUnits(BigInt(amount), token.decimals);
+}
+
+// Helper function to get token symbol
+function getTokenSymbol(tokenAddress: string): string {
+  const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
+  return token?.symbol || 'UNKNOWN';
+}
+
+// Helper function to calculate USD value (simplified - in real app you'd fetch current prices)
+function calculateUSDValue(amount: string, tokenSymbol: string): number {
+  const numAmount = parseFloat(amount);
+  // Mock exchange rates - in production, fetch from price API
+  const rates: Record<string, number> = {
+    USDC: 1.0,
+    USDT: 1.0,
+    IDRX: 0.000065, // Assuming 1 IDRX = 0.000065 USD (mock rate)
+  };
+  
+  return numAmount * (rates[tokenSymbol] || 0);
+}
 
 /**
  * Hook to calculate comprehensive analytics from payment links data
@@ -17,12 +50,21 @@ export function useAnalytics() {
   const { address } = useAccount();
   const {
     data: paymentLinks = [],
-    isLoading,
-    error,
+    isLoading: linksLoading,
+    error: linksError,
   } = usePaymentLinks(address);
 
+  // Fetch real analytics data from GraphQL
+  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
+    queryKey: ['creator-analytics', address],
+    queryFn: () => address ? fetchCreatorAnalytics(address) : null,
+    enabled: !!address,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds
+  });
+
   const analytics = useMemo(() => {
-    if (!paymentLinks.length || !address) {
+    if (!address) {
       return {
         stats: getEmptyStats(address),
         linkAnalytics: [],
@@ -30,7 +72,7 @@ export function useAnalytics() {
       };
     }
 
-    const stats = calculateCreatorStats(paymentLinks, address);
+    const stats = calculateCreatorStats(analyticsData || undefined, paymentLinks, address);
     const linkAnalytics = paymentLinks.map((link) =>
       calculateLinkAnalytics(link)
     );
@@ -45,12 +87,12 @@ export function useAnalytics() {
       linkAnalytics,
       dashboardData,
     };
-  }, [paymentLinks, address]);
+  }, [analyticsData, paymentLinks, address]);
 
   return {
     ...analytics,
-    isLoading,
-    error,
+    isLoading: linksLoading || analyticsLoading,
+    error: linksError || analyticsError,
     refresh: () => {
       // This will be handled by the payment links query invalidation
     },
@@ -58,9 +100,10 @@ export function useAnalytics() {
 }
 
 /**
- * Calculate comprehensive creator statistics
+ * Calculate comprehensive creator statistics from real GraphQL data
  */
 function calculateCreatorStats(
+  analyticsData: CreatorAnalyticsData | undefined,
   links: PaymentLink[],
   creator: Address
 ): CreatorStats {
@@ -70,28 +113,30 @@ function calculateCreatorStats(
       link.isActive && !link.isExpired && (!link.isUsed || link.usageType !== 0) // ONE_TIME = 0
   );
 
-  // Calculate earnings by token
+  // Calculate earnings by token from real data
   const totalEarnings: Record<Address, bigint> = {};
   const formattedTotalEarnings: Record<Address, string> = {};
 
-  // For demo purposes, simulate some earnings based on link data
-  links.forEach((link) => {
-    const tokenAddress = link.token;
-    const amount = BigInt(parseFloat(link.amount) * Math.pow(10, 18)); // Assume 18 decimals
+  if (analyticsData) {
+    const { payments, donations, productPurchases, contentPurchases } = analyticsData;
+    
+    // Process all transaction types
+    [...payments, ...donations, ...productPurchases, ...contentPurchases].forEach(tx => {
+      const tokenAddress = tx.token as Address;
+      const amount = BigInt(tx.amount);
 
-    if (!totalEarnings[tokenAddress]) {
-      totalEarnings[tokenAddress] = BigInt(0);
-    }
+      if (!totalEarnings[tokenAddress]) {
+        totalEarnings[tokenAddress] = BigInt(0);
+      }
 
-    // Simulate some earnings (10-50% of link amount)
-    const simulatedEarnings =
-      (amount * BigInt(Math.floor(Math.random() * 40 + 10))) / BigInt(100);
-    totalEarnings[tokenAddress] += simulatedEarnings;
+      totalEarnings[tokenAddress] += amount;
 
-    formattedTotalEarnings[tokenAddress] = (
-      Number(totalEarnings[tokenAddress]) / Math.pow(10, 18)
-    ).toFixed(4);
-  });
+      const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
+      if (token) {
+        formattedTotalEarnings[tokenAddress] = formatUnits(totalEarnings[tokenAddress], token.decimals);
+      }
+    });
+  }
 
   // Calculate links by type
   const linksByType: Record<LinkType, number> = {
@@ -105,25 +150,32 @@ function calculateCreatorStats(
     linksByType[link.linkType]++;
   });
 
-  // Calculate monthly earnings (last 6 months)
-  const monthlyEarnings: Record<string, Record<Address, bigint>> = {};
-  for (let i = 0; i < 6; i++) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthKey = `${date.getFullYear()}-${String(
-      date.getMonth() + 1
-    ).padStart(2, "0")}`;
-    monthlyEarnings[monthKey] = {};
+  // Calculate monthly earnings from real transaction data
+  const monthlyEarnings = calculateMonthlyEarnings(analyticsData);
 
-    Object.keys(totalEarnings).forEach((token) => {
-      const monthlyAmount = totalEarnings[token as Address] / BigInt(6); // Distribute evenly
-      monthlyEarnings[monthKey][token as Address] = monthlyAmount;
+  // Calculate real metrics from analytics data
+  const totalPayments = analyticsData ? 
+    analyticsData.payments.length + analyticsData.donations.length + 
+    analyticsData.productPurchases.length + analyticsData.contentPurchases.length : 0;
+  const totalClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0);
+  const totalViews = links.reduce((sum, link) => sum + (link.views || 0), 0);
+
+  // Calculate average order value per token
+  const averageOrderValue: Record<Address, bigint> = {};
+  Object.entries(totalEarnings).forEach(([tokenAddress, totalAmount]) => {
+    averageOrderValue[tokenAddress as Address] = totalPayments > 0 ? totalAmount / BigInt(totalPayments) : BigInt(0);
+  });
+
+  // Calculate total volume in USD
+  let totalVolumeUSD = 0;
+  Object.entries(totalEarnings).forEach(([tokenAddress, amount]) => {
+      const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
+      if (token) {
+        const formattedAmount = formatUnits(amount, token.decimals);
+        const usdValue = calculateUSDValue(formattedAmount, token.symbol);
+        totalVolumeUSD += usdValue;
+      }
     });
-  }
-
-  // Simulate some metrics
-  const totalPayments = Math.floor(Math.random() * 50 + 10);
-  const totalClicks = Math.floor(Math.random() * 200 + 50);
-  const totalViews = Math.floor(Math.random() * 500 + 100);
 
   return {
     address: creator,
@@ -131,6 +183,7 @@ function calculateCreatorStats(
     activeLinks: activeLinks.length,
     totalEarnings,
     formattedTotalEarnings,
+    totalVolumeUSD: totalVolumeUSD.toFixed(2),
     totalPayments,
     totalClicks,
     totalViews,
@@ -139,8 +192,39 @@ function calculateCreatorStats(
     recentPayments: [], // Would be populated from blockchain events
     monthlyEarnings,
     linksByType,
-    averageOrderValue: totalEarnings, // Simplified calculation
+    averageOrderValue,
   };
+}
+
+/**
+ * Calculate monthly earnings from transaction data
+ */
+function calculateMonthlyEarnings(analyticsData: CreatorAnalyticsData | undefined): Record<string, Record<Address, bigint>> {
+  const monthlyEarnings: Record<string, Record<Address, bigint>> = {};
+  
+  if (!analyticsData) return monthlyEarnings;
+  
+  const { payments, donations, productPurchases, contentPurchases } = analyticsData;
+  const allTransactions = [...payments, ...donations, ...productPurchases, ...contentPurchases];
+  
+  allTransactions.forEach(tx => {
+    const date = new Date(parseInt(tx.timestamp_) * 1000);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const tokenAddress = tx.token as Address;
+    const amount = BigInt(tx.amount);
+    
+    if (!monthlyEarnings[monthKey]) {
+      monthlyEarnings[monthKey] = {};
+    }
+    
+    if (!monthlyEarnings[monthKey][tokenAddress]) {
+      monthlyEarnings[monthKey][tokenAddress] = BigInt(0);
+    }
+    
+    monthlyEarnings[monthKey][tokenAddress] += amount;
+  });
+  
+  return monthlyEarnings;
 }
 
 /**
@@ -151,8 +235,23 @@ function calculateLinkAnalytics(link: PaymentLink): LinkAnalytics {
   const views = Math.floor(Math.random() * 100 + 10);
   const clicks = Math.floor(Math.random() * 50 + 5);
   const payments = Math.floor(Math.random() * 10 + 1);
-  const totalAmount =
-    BigInt(parseFloat(link.amount) * Math.pow(10, 18)) * BigInt(payments);
+  
+  // Find the token to get correct decimals
+  const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === link.token.toLowerCase());
+  const decimals = token?.decimals || 18;
+  const tokenSymbol = token?.symbol || 'UNKNOWN';
+  
+  // Calculate total amount using correct decimals
+  const totalAmount = BigInt(parseFloat(link.amount) * Math.pow(10, decimals)) * BigInt(payments);
+  const averageAmount = payments > 0 ? totalAmount / BigInt(payments) : BigInt(0);
+
+  // Format amounts in token units
+  const formattedTotalAmount = formatTokenAmount(totalAmount.toString(), link.token);
+  const formattedAverageAmount = payments > 0 ? formatTokenAmount(averageAmount.toString(), link.token) : "0";
+  
+  // Calculate USD values
+  const totalAmountUSD = calculateUSDValue(formattedTotalAmount, tokenSymbol);
+  const averageAmountUSD = payments > 0 ? calculateUSDValue(formattedAverageAmount, tokenSymbol) : 0;
 
   return {
     title: link.title,
@@ -162,12 +261,11 @@ function calculateLinkAnalytics(link: PaymentLink): LinkAnalytics {
     payments,
     conversionRate: clicks > 0 ? (payments / clicks) * 100 : 0,
     totalAmount,
-    averageAmount: payments > 0 ? totalAmount / BigInt(payments) : BigInt(0),
-    formattedTotalAmount: (Number(totalAmount) / Math.pow(10, 18)).toFixed(4),
-    formattedAverageAmount:
-      payments > 0
-        ? (Number(totalAmount / BigInt(payments)) / Math.pow(10, 18)).toFixed(4)
-        : "0",
+    averageAmount,
+    formattedTotalAmount: `${parseFloat(formattedTotalAmount).toFixed(4)} ${tokenSymbol}`,
+    formattedAverageAmount: `${parseFloat(formattedAverageAmount).toFixed(4)} ${tokenSymbol}`,
+    formattedTotalAmountUSD: totalAmountUSD.toFixed(2),
+    formattedAverageAmountUSD: averageAmountUSD.toFixed(2),
     topPaymentAmount: totalAmount,
     recentPayments: [], // Would be populated from blockchain events
     paymentsByToken: { [link.token]: totalAmount },
@@ -197,26 +295,15 @@ function createDashboardData(
     stats,
     links,
     analytics,
-    tokens: [
-      {
-        address: "0x0000000000000000000000000000000000000000" as Address,
-        symbol: "ETH",
-        name: "Ethereum",
-        decimals: 18,
-        isNative: true,
-        logoUrl: "/tokens/eth.svg",
-        priceUSD: 2000,
-      },
-      {
-        address: "0xA0b86a33E6441c8C0E6C8C8C8C8C8C8C8C8C8C8C" as Address,
-        symbol: "USDC",
-        name: "USD Coin",
-        decimals: 6,
-        isNative: false,
-        logoUrl: "/tokens/usdc.svg",
-        priceUSD: 1,
-      },
-    ],
+    tokens: SUPPORTED_TOKENS_ARRAY.map(token => ({
+      address: token.address,
+      symbol: token.symbol,
+      name: token.name,
+      decimals: token.decimals,
+      isNative: false,
+      logoUrl: `/tokens/${token.symbol.toLowerCase()}.svg`,
+      priceUSD: token.symbol === 'USDC' || token.symbol === 'USDT' ? 1 : 0.000065, // Mock prices
+    })),
     recentActivity: [], // Would be populated from blockchain events
     pendingWithdrawals: {}, // Would be calculated from contract state
   };
@@ -233,6 +320,7 @@ function getEmptyStats(address?: Address): CreatorStats {
     activeLinks: 0,
     totalEarnings: {},
     formattedTotalEarnings: {},
+    totalVolumeUSD: "0.00",
     totalPayments: 0,
     totalClicks: 0,
     totalViews: 0,
@@ -313,25 +401,29 @@ export function useTopPerformingLinks(limit: number = 5) {
 /**
  * Hook to get revenue trends
  */
-export function useRevenueTrends() {
+export function useRevenueTrends(timeRange: "7d" | "30d" | "90d" = "30d") {
   const { stats } = useAnalytics();
 
   return useMemo(() => {
     const trends = Object.entries(stats.monthlyEarnings)
       .map(([month, earnings]) => {
-        const totalForMonth = Object.values(earnings).reduce(
-          (sum, amount) => sum + Number(amount) / Math.pow(10, 18),
-          0
-        );
+        const totalUSD = Object.entries(earnings).reduce((sum, [tokenAddress, amount]) => {
+          const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
+          if (!token) return sum;
+          
+          const formattedAmount = formatUnits(amount, token.decimals);
+          const usdValue = calculateUSDValue(formattedAmount, token.symbol);
+          return sum + usdValue;
+        }, 0);
 
         return {
           month,
-          revenue: totalForMonth,
-          formatted: totalForMonth.toFixed(4),
+          revenue: totalUSD,
+          formatted: totalUSD.toFixed(4),
         };
       })
       .sort((a, b) => a.month.localeCompare(b.month));
 
-    return trends;
+    return trends.slice(-6); // Last 6 months
   }, [stats.monthlyEarnings]);
 }

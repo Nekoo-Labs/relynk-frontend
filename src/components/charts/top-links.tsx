@@ -92,7 +92,7 @@ export function TopLinks({ analytics, className }: TopLinksProps) {
               </div>
               <div className="text-right">
                 <div className="font-bold text-foreground">
-                  {link.formattedTotalAmount} ETH
+                  ${link.formattedTotalAmountUSD || "0.00"} USD
                 </div>
                 <Badge variant="outline" className="text-xs">
                   {link.conversionRate.toFixed(1)}% conv.

@@ -51,7 +51,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
           </Badge>
         </div>
         <p className="text-sm text-foreground/60">
-          Total: {totalRevenue.toFixed(4)} ETH
+          Total: ${totalRevenue.toFixed(2)} USD
         </p>
       </CardHeader>
       <CardContent>
@@ -66,7 +66,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
                     <div 
                       className="w-full bg-gradient-to-t from-main to-main/60 rounded-t-sm transition-all duration-500 hover:from-main/80 hover:to-main/40 min-h-[4px]"
                       style={{ height: `${Math.max(height, 4)}%` }}
-                      title={`${formatMonth(item.month)}: ${item.formatted} ETH`}
+                      title={`${formatMonth(item.month)}: $${item.formatted} USD`}
                     />
                   </div>
                   <span className="text-xs text-foreground/60 font-mono">
@@ -82,7 +82,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
             {data.slice(-4).map((item) => (
               <div key={item.month} className="flex justify-between">
                 <span className="text-foreground/60">{formatMonth(item.month)}:</span>
-                <span className="font-mono text-foreground">{item.formatted} ETH</span>
+                <span className="font-mono text-foreground">${item.formatted} USD</span>
               </div>
             ))}
           </div>

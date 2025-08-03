@@ -143,9 +143,9 @@ export default function SettingsPage() {
                   </label>
                   <select className="w-full px-3 py-2 border border-border rounded-base shadow-shadow bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-main">
                     <option>USD ($)</option>
-                    <option>EUR (€)</option>
-                    <option>ETH (Ξ)</option>
-                    <option>BTC (₿)</option>
+                    <option>USDC</option>
+                    <option>USDT</option>
+                    <option>IDRX</option>
                   </select>
                 </div>
 

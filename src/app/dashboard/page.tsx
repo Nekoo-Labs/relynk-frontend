@@ -43,7 +43,7 @@ function DashboardContent() {
   // Get user's profile
   const { data: profileResult, isLoading: loadingProfile } =
     useGetProfileByOwner(address!);
-  const [profile, username] = (profileResult as [any, string] | undefined) || [
+  const [profile, username] = (profileResult as [unknown, string] | undefined) || [
     null,
     "",
   ];
@@ -162,7 +162,7 @@ function DashboardContent() {
           <div className="hover:scale-105 transition-transform duration-300">
             <StatCard
               title="Total Volume 💰"
-              value={`${Object.values(stats.formattedTotalEarnings)[0] || "0.0000"} ETH`}
+              value={`$${stats.totalVolumeUSD || "0"}`}
               icon={<CreditCard className="h-4 w-4" />}
               trend={{ value: 22, isPositive: true }}
             />

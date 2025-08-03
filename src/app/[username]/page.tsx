@@ -185,7 +185,7 @@ export default function ProfilePage() {
   const { data: profile, isLoading: isLoadingProfile, error } = useGetProfile(username) as { 
     data: Profile | undefined, 
     isLoading: boolean, 
-    error: any 
+    error: Error | null 
   };
 
   useEffect(() => {

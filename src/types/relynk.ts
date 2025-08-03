@@ -232,6 +232,9 @@ export interface PaymentLink {
   formattedAmount: string; // e.g., "10.50 USDC"
   shortId: string; // First 8 chars of linkId for display
   previewImage?: string; // First image from metadata
+  // Analytics fields (optional, populated from analytics service)
+  clicks?: number;
+  views?: number;
 }
 
 // ============================================================================
@@ -443,6 +446,8 @@ export interface LinkAnalytics {
   averageAmount: bigint;
   formattedTotalAmount: string;
   formattedAverageAmount: string;
+  formattedTotalAmountUSD?: string; // USD formatted amount
+  formattedAverageAmountUSD?: string; // USD formatted average amount
   topPaymentAmount: bigint;
   recentPayments: PaymentProcessedEvent[];
   paymentsByToken: Record<Address, bigint>;
@@ -457,6 +462,7 @@ export interface CreatorStats {
   activeLinks: number;
   totalEarnings: Record<Address, bigint>; // Per token
   formattedTotalEarnings: Record<Address, string>;
+  totalVolumeUSD?: string; // Total volume in USD
   totalPayments: number;
   totalClicks: number;
   totalViews: number;
