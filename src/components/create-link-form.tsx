@@ -447,34 +447,6 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
         </Card>
       )}
 
-      {/* Debug Info */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="pt-6">
-          <p className="text-sm text-blue-800">Debug Info:</p>
-          <p className="text-xs text-blue-600">
-            isConnected: {String(isConnected)} | isConnecting:{" "}
-            {String(isConnecting)}
-          </p>
-          <p className="text-xs text-blue-600">
-            address: {address || "undefined"} (type: {typeof address})
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              console.log("Debug - Current state:", {
-                isConnected,
-                isConnecting,
-                address,
-                addressType: typeof address,
-              });
-            }}
-          >
-            Log Debug Info
-          </Button>
-        </CardContent>
-      </Card>
       {/* Link Type Selection */}
       <Card>
         <CardHeader>

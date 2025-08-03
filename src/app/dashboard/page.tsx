@@ -9,9 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { DashboardWelcomeCard } from "@/components/dashboard-welcome-card";
 import { DashboardUsernameSetup } from "@/components/dashboard-username-setup";
 import { PaymentLinksDashboard } from "@/components/dashboard/payment-links-dashboard";
+import { RevenueChart } from "@/components/charts/revenue-chart";
+import { LinkTypeChart } from "@/components/charts/link-type-chart";
+import { TopLinks } from "@/components/charts/top-links";
 import { useAccount } from "wagmi";
 import { useProfileRegistry } from "@/hooks/use-profile-registry";
 import { useSearchParams } from "next/navigation";
+import { useAnalytics, useRevenueTrends, useTopPerformingLinks } from "@/hooks/use-analytics";
 import {
   BarChart3,
   CreditCard,
@@ -26,18 +30,15 @@ import {
 } from "lucide-react";
 import { Suspense } from "react";
 
-// Mock data for the dashboard
-const mockStats = {
-  totalLinks: 24,
-  totalClicks: 1247,
-  totalConversions: 89,
-  totalVolume: "$2,847",
-};
-
 function DashboardContent() {
   const { address } = useAccount();
   const { useGetProfileByOwner } = useProfileRegistry();
   const searchParams = useSearchParams();
+
+  // Get analytics data
+  const { stats, isLoading: loadingAnalytics } = useAnalytics();
+  const revenueTrends = useRevenueTrends();
+  const topPerformingLinks = useTopPerformingLinks(5);
 
   // Get user's profile
   const { data: profileResult, isLoading: loadingProfile } =
@@ -48,14 +49,14 @@ function DashboardContent() {
   ];
   const hasProfile = !!profile;
 
-  if (loadingProfile) {
+  if (loadingProfile || loadingAnalytics) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary-background/30">
         <Card className="w-full max-w-md mx-4 glow-soft">
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main"></div>
             <p className="text-foreground/60 text-center">
-              Checking your profile...
+              {loadingProfile ? "Checking your profile..." : "Loading analytics..."}
             </p>
           </CardContent>
         </Card>
@@ -137,7 +138,7 @@ function DashboardContent() {
           <div className="hover:scale-105 transition-transform duration-300">
             <StatCard
               title="Total Links 🔗"
-              value={mockStats.totalLinks}
+              value={stats.totalLinks}
               icon={<LinkIcon className="h-4 w-4" />}
               trend={{ value: 12, isPositive: true }}
             />
@@ -145,7 +146,7 @@ function DashboardContent() {
           <div className="hover:scale-105 transition-transform duration-300">
             <StatCard
               title="Total Clicks 👆"
-              value={mockStats.totalClicks}
+              value={stats.totalClicks}
               icon={<MousePointer className="h-4 w-4" />}
               trend={{ value: 8, isPositive: true }}
             />
@@ -153,15 +154,15 @@ function DashboardContent() {
           <div className="hover:scale-105 transition-transform duration-300">
             <StatCard
               title="Conversions 📈"
-              value={mockStats.totalConversions}
+              value={stats.totalPayments}
               icon={<TrendingUp className="h-4 w-4" />}
-              trend={{ value: 15, isPositive: true }}
+              trend={{ value: stats.conversionRate, isPositive: stats.conversionRate > 0 }}
             />
           </div>
           <div className="hover:scale-105 transition-transform duration-300">
             <StatCard
               title="Total Volume 💰"
-              value={mockStats.totalVolume}
+              value={`${Object.values(stats.formattedTotalEarnings)[0] || "0.0000"} ETH`}
               icon={<CreditCard className="h-4 w-4" />}
               trend={{ value: 22, isPositive: true }}
             />
@@ -170,34 +171,12 @@ function DashboardContent() {
 
         {/* Charts Section */}
         <div className="grid gap-4 md:grid-cols-2">
-          <Card className="glow-hover">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-main" />
-                Performance Overview 📊
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[200px] flex items-center justify-center text-foreground/60 shimmer rounded-base">
-                📊 Performance chart will be implemented here ✨
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glow-hover">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-main" />
-                Link Type Distribution 🥧
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[200px] flex items-center justify-center text-foreground/60 shimmer rounded-base">
-                🥧 Link type chart will be implemented here ✨
-              </div>
-            </CardContent>
-          </Card>
+          <RevenueChart data={revenueTrends} />
+          <LinkTypeChart linksByType={stats.linksByType} />
         </div>
+
+        {/* Top Performing Links */}
+        <TopLinks analytics={topPerformingLinks} />
 
         {/* Payment Links Dashboard */}
         <PaymentLinksDashboard />

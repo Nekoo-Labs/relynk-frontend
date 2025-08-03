@@ -8,7 +8,7 @@ import {
   useWaitForTransactionReceipt,
   useChainId,
 } from "wagmi";
-import { Address, parseEther, formatEther } from "viem";
+import { Address } from "viem";
 import {
   LinkData,
   PaymentRequest,
@@ -158,14 +158,17 @@ export function useRelynkProcessor() {
     try {
       setIsProcessing(true);
 
-      writeContract({
+      const hash = await writeContract({
         address: relynkProcessorConfig.address,
         abi: relynkProcessorConfig.abi,
         functionName: "purchaseContent",
         args: [paymentRequest.linkData, paymentRequest.signature],
       });
 
-      return { success: true };
+      return {
+        success: true,
+        transactionHash: hash as unknown as `0x${string}`,
+      };
     } catch (error) {
       console.error("Content purchase failed:", error);
       return {

@@ -71,7 +71,8 @@ const mockPaymentLinks: PaymentLink[] = [
       updatedAt: Date.now(),
     },
     ipfsHash: "QmExample1",
-    signature: "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+    signature:
+      "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
     originalLinkData: {
       linkId: "link_1",
       creator: "0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5e" as Address,
@@ -122,7 +123,8 @@ const mockPaymentLinks: PaymentLink[] = [
       updatedAt: Date.now(),
     },
     ipfsHash: "QmExample2",
-    signature: "0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111" as `0x${string}`,
+    signature:
+      "0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111" as `0x${string}`,
     originalLinkData: {
       linkId: "link_2",
       creator: "0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5e" as Address,
@@ -131,7 +133,9 @@ const mockPaymentLinks: PaymentLink[] = [
       usageType: 0,
       amount: BigInt("100000000000000000"), // 0.1 ETH in wei
       token: "0x0000000000000000000000000000000000000000" as Address,
-      expires: BigInt(Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000)),
+      expires: BigInt(
+        Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000)
+      ),
       metadata: "QmExample2",
       nonce: BigInt(2),
     },
@@ -172,7 +176,8 @@ const mockPaymentLinks: PaymentLink[] = [
       updatedAt: Date.now(),
     },
     ipfsHash: "QmExample3",
-    signature: "0x2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222" as `0x${string}`,
+    signature:
+      "0x2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222" as `0x${string}`,
     originalLinkData: {
       linkId: "link_3",
       creator: "0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5e" as Address,
@@ -181,7 +186,9 @@ const mockPaymentLinks: PaymentLink[] = [
       usageType: 0,
       amount: BigInt("50000000000000000"), // 0.05 ETH in wei
       token: "0x0000000000000000000000000000000000000000" as Address,
-      expires: BigInt(Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000)),
+      expires: BigInt(
+        Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000)
+      ),
       metadata: "QmExample3",
       nonce: BigInt(3),
     },
@@ -546,18 +553,6 @@ export function PaymentLinksDashboard({
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
                     </CardContent>

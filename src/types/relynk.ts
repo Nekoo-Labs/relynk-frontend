@@ -412,10 +412,11 @@ export interface SupportedToken {
   name: string;
   decimals: number;
   isNative?: boolean;
+  logoUrl?: string;
   icon?: string;
   priceUSD?: number;
   isStablecoin?: boolean;
-  chainId: number;
+  chainId?: number;
 }
 
 export interface TokenBalance {
@@ -432,16 +433,15 @@ export interface TokenBalance {
 // ============================================================================
 
 export interface LinkAnalytics {
+  title: string;
   linkId: string;
-  totalPayments: number;
-  totalAmount: bigint;
-  formattedTotalAmount: string;
-  uniquePayers: number;
-  lastPayment?: Date;
+  views: number;
+  clicks: number;
+  payments: number;
   conversionRate: number; // clicks to payments ratio
-  clickCount: number;
-  viewCount: number;
+  totalAmount: bigint;
   averageAmount: bigint;
+  formattedTotalAmount: string;
   formattedAverageAmount: string;
   topPaymentAmount: bigint;
   recentPayments: PaymentProcessedEvent[];
