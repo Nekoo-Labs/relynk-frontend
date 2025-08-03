@@ -13,7 +13,9 @@ export async function GET(
 
   console.log(id);
 
-  const link = await pinata.files.public.list().name(id).limit(1);
+  const link = await pinata.files.public.list().name(id).keyvalues({
+    type: "payment-link", // Only return payment link files
+  }).limit(1);
 
   if (link.files.length === 0) {
     return NextResponse.json({ text: "Link not found" }, { status: 404 });

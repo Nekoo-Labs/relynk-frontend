@@ -104,6 +104,7 @@ export class UnifiedIPFSService {
           creator: linkData.creator.toLowerCase(), // Track by creator address
           linkId: linkData.linkId,
           linkType: linkData.linkType.toString(),
+          type: "payment-link",
           title: metadata.title,
           createdAt: Date.now().toString(),
           version: "1.0.0",
@@ -267,6 +268,11 @@ export class UnifiedIPFSService {
 
       // Validate the structure
       if (!this.validateIPFSLinkData(data)) {
+        // Check if this might be profile data instead of payment link data
+        const obj = data as Record<string, unknown>;
+        if (obj.name && obj.bio !== undefined && obj.theme && obj.socialLinks !== undefined) {
+          throw new Error("IPFS hash contains profile data, not payment link data. This indicates a data filtering issue.");
+        }
         throw new Error("Invalid IPFSLinkData structure");
       }
 
@@ -432,7 +438,12 @@ export class UnifiedIPFSService {
       const linkData = obj.linkData as Record<string, unknown>;
       const metadata = obj.metadata as Record<string, unknown>;
       
-      return Boolean(
+      // Basic structure validation logging for debugging
+      if (!data || typeof data !== "object") {
+        console.error("Invalid IPFS data: not an object");
+      }
+      
+      const isValid = Boolean(
         data &&
         typeof data === "object" &&
         obj.linkData &&
@@ -451,7 +462,14 @@ export class UnifiedIPFSService {
         metadata.title &&
         typeof metadata.linkType === "number"
       );
+      
+      if (!isValid) {
+        console.error("IPFSLinkData validation failed");
+      }
+      
+      return isValid;
     } catch (error) {
+      console.error("Error during IPFSLinkData validation:", error);
       return false;
     }
   }

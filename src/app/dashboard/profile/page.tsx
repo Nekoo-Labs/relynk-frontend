@@ -22,6 +22,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import Link from "next/link";
+import { Label } from "@/components/ui/label";
 
 export default function ProfilePage() {
   const { address, isConnecting } = useAccount();
@@ -33,7 +34,6 @@ export default function ProfilePage() {
     username,
     profileData,
     isLoading: isLoadingProfile,
-    error,
   } = useCurrentUserProfile();
 
   // Get payment links data
@@ -150,9 +150,9 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-foreground/60">
+                    <Label className="text-sm font-medium text-foreground/60">
                       Bio
-                    </label>
+                    </Label>
                     <p className="text-sm">
                       {profileData.bio || "No bio added"}
                     </p>

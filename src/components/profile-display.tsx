@@ -79,7 +79,7 @@ export function ProfileDisplay({
     setClickedLinks((prev) => new Set([...prev, link.id]));
 
     // Track click analytics here if needed
-    console.log("Link clicked:", link);
+    // console.log("Link clicked:", link);
 
     // Open link
     if (link.type === "link") {
@@ -92,7 +92,10 @@ export function ProfileDisplay({
   };
 
   const getButtonStyle = () => {
-    const { buttonStyle, accentColor } = profileData.theme || { buttonStyle: 'rounded', accentColor: '#3b82f6' };
+    const { buttonStyle, accentColor } = profileData.theme || {
+      buttonStyle: "rounded",
+      accentColor: "#3b82f6",
+    };
     const baseClasses =
       "w-full p-4 text-left transition-all duration-200 hover:scale-105 hover:shadow-lg";
 
@@ -122,7 +125,7 @@ export function ProfileDisplay({
         color: profileData?.theme?.textColor,
       }}
     >
-      <div className="max-w-md flex-1 h-full mx-auto space-y-6 flex flex-col">
+      <div className="max-w-md w-full flex-1 h-full mx-auto space-y-6 flex flex-col">
         {/* Header */}
         <div className="text-center space-y-4">
           {/* Avatar */}

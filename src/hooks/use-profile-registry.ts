@@ -1,11 +1,22 @@
 "use client";
 
-import { useState } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
-import { Address } from 'viem';
-import { Profile, ProfileFeeConfig, CreatorEarnings, ProfileData } from '@/types/profile';
-import { ProfileIPFSService } from '@/lib/profile-ipfs-service';
-import { getContractConfig } from '@/lib/contracts';
+import { useState } from "react";
+import {
+  useAccount,
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+} from "wagmi";
+import { Address } from "viem";
+import {
+  Profile,
+  ProfileFeeConfig,
+  CreatorEarnings,
+  ProfileData,
+} from "@/types/profile";
+import { ProfileIPFSService } from "@/lib/profile-ipfs-service";
+import { getContractConfig } from "@/lib/contracts";
 
 export function useProfileRegistry() {
   const { address } = useAccount();
@@ -27,10 +38,11 @@ export function useProfileRegistry() {
     return useReadContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'getProfile',
+      functionName: "getProfile",
       args: [username],
       query: {
         enabled: !!username,
+        refetchOnWindowFocus: false,
       },
     });
   };
@@ -39,7 +51,7 @@ export function useProfileRegistry() {
     return useReadContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'getProfileByOwner',
+      functionName: "getProfileByOwner",
       args: [owner],
       query: {
         enabled: !!owner,
@@ -51,7 +63,7 @@ export function useProfileRegistry() {
     return useReadContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'isUsernameAvailable',
+      functionName: "isUsernameAvailable",
       args: [username],
       query: {
         enabled: !!username && username.length > 0,
@@ -63,7 +75,7 @@ export function useProfileRegistry() {
     return useReadContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'getProfileFeeConfig',
+      functionName: "getProfileFeeConfig",
       args: [username],
       query: {
         enabled: !!username,
@@ -75,7 +87,7 @@ export function useProfileRegistry() {
     return useReadContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'getCreatorEarnings',
+      functionName: "getCreatorEarnings",
       args: [creator, token],
       query: {
         enabled: !!creator && !!token,
@@ -85,16 +97,22 @@ export function useProfileRegistry() {
 
   // Helper function to upload profile data to IPFS
   const uploadToIPFS = async (profileData: ProfileData): Promise<string> => {
-    if (!address) throw new Error('Wallet not connected');
-    
+    if (!address) throw new Error("Wallet not connected");
+
     setIsUploading(true);
     try {
-      const ipfsHash = await ProfileIPFSService.uploadProfile(profileData, address);
+      const ipfsHash = await ProfileIPFSService.uploadProfile(
+        profileData,
+        address
+      );
 
       // Pin the content to ensure it stays available
       await ProfileIPFSService.pinContent(ipfsHash);
 
-      console.log('Profile data uploaded to IPFS:', { hash: ipfsHash, data: profileData });
+      console.log("Profile data uploaded to IPFS:", {
+        hash: ipfsHash,
+        data: profileData,
+      });
       return ipfsHash;
     } finally {
       setIsUploading(false);
@@ -102,60 +120,67 @@ export function useProfileRegistry() {
   };
 
   // Helper function to retrieve profile data from IPFS
-  const getProfileData = async (ipfsHash: string): Promise<ProfileData | null> => {
+  const getProfileData = async (
+    ipfsHash: string
+  ): Promise<ProfileData | null> => {
     try {
       return await ProfileIPFSService.getProfile(ipfsHash);
     } catch (error) {
-      console.error('Failed to retrieve profile data from IPFS:', error);
+      console.error("Failed to retrieve profile data from IPFS:", error);
       return null;
     }
   };
 
   // Write functions
   const createProfile = async (username: string, profileData: ProfileData) => {
-    if (!address) throw new Error('Wallet not connected');
+    if (!address) throw new Error("Wallet not connected");
 
     const ipfsHash = await uploadToIPFS(profileData);
+
+    // console.log(ipfsHash);
 
     writeContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'createProfile',
+      functionName: "createProfile",
       args: [username, ipfsHash],
     });
   };
 
   const updateProfile = async (profileData: ProfileData) => {
-    if (!address) throw new Error('Wallet not connected');
+    if (!address) throw new Error("Wallet not connected");
 
     const ipfsHash = await uploadToIPFS(profileData);
 
     writeContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'updateProfile',
+      functionName: "updateProfile",
       args: [ipfsHash],
     });
   };
 
-  const setProfileFeeConfig = (useCustomFees: boolean, platformFeePercent: bigint) => {
-    if (!address) throw new Error('Wallet not connected');
+  const setProfileFeeConfig = (
+    useCustomFees: boolean,
+    platformFeePercent: bigint
+  ) => {
+    if (!address) throw new Error("Wallet not connected");
 
     writeContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'setProfileFeeConfig',
+      functionName: "setProfileFeeConfig",
       args: [useCustomFees, platformFeePercent],
     });
   };
 
   const withdrawEarnings = (token: Address, amount: bigint) => {
-    if (!address) throw new Error('Wallet not connected');
+    if (!address) throw new Error("Wallet not connected");
 
     writeContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
-      functionName: 'withdrawEarnings',
+      functionName: "withdrawEarnings",
       args: [token, amount],
     });
   };
