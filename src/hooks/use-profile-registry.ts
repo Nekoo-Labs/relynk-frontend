@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { Address } from 'viem';
 import { Profile, ProfileFeeConfig, CreatorEarnings, ProfileData } from '@/types/profile';
-import { IPFSService } from '@/lib/ipfs';
+import { ProfileIPFSService } from '@/lib/profile-ipfs-service';
 import { getContractConfig } from '@/lib/contracts';
 
 export function useProfileRegistry() {
@@ -85,12 +85,14 @@ export function useProfileRegistry() {
 
   // Helper function to upload profile data to IPFS
   const uploadToIPFS = async (profileData: ProfileData): Promise<string> => {
+    if (!address) throw new Error('Wallet not connected');
+    
     setIsUploading(true);
     try {
-      const ipfsHash = await IPFSService.uploadProfile(profileData);
+      const ipfsHash = await ProfileIPFSService.uploadProfile(profileData, address);
 
       // Pin the content to ensure it stays available
-      await IPFSService.pinContent(ipfsHash);
+      await ProfileIPFSService.pinContent(ipfsHash);
 
       console.log('Profile data uploaded to IPFS:', { hash: ipfsHash, data: profileData });
       return ipfsHash;
@@ -102,7 +104,7 @@ export function useProfileRegistry() {
   // Helper function to retrieve profile data from IPFS
   const getProfileData = async (ipfsHash: string): Promise<ProfileData | null> => {
     try {
-      return await IPFSService.getProfile(ipfsHash);
+      return await ProfileIPFSService.getProfile(ipfsHash);
     } catch (error) {
       console.error('Failed to retrieve profile data from IPFS:', error);
       return null;

@@ -48,7 +48,7 @@ export class ImageUploadService {
       }
       const urlResponse = await urlRequest.json();
 
-      // Upload using the signed URL (following docs pattern)
+      // Upload using Pinata SDK with signed URL (safe for client-side)
       const upload = await pinata.upload.public
         .file(file)
         .url(urlResponse.url);

@@ -82,7 +82,7 @@ export class IPFSMetadataService {
         type: "application/json",
       });
 
-      // Upload using the signed URL (following docs pattern)
+      // Upload using Pinata SDK with signed URL (safe for client-side)
       const upload = await pinata.upload.public
         .file(file)
         .url(urlResponse.url);
@@ -117,7 +117,7 @@ export class IPFSMetadataService {
         type: "application/json",
       });
 
-      // Upload using the signed URL (following docs pattern)
+      // Upload using Pinata SDK with signed URL (safe for client-side)
       const upload = await pinata.upload.public
         .file(file)
         .url(urlResponse.url);

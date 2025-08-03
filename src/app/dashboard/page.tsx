@@ -15,7 +15,11 @@ import { TopLinks } from "@/components/charts/top-links";
 import { useAccount } from "wagmi";
 import { useProfileRegistry } from "@/hooks/use-profile-registry";
 import { useSearchParams } from "next/navigation";
-import { useAnalytics, useRevenueTrends, useTopPerformingLinks } from "@/hooks/use-analytics";
+import {
+  useAnalytics,
+  useRevenueTrends,
+  useTopPerformingLinks,
+} from "@/hooks/use-analytics";
 import {
   BarChart3,
   CreditCard,
@@ -43,10 +47,9 @@ function DashboardContent() {
   // Get user's profile
   const { data: profileResult, isLoading: loadingProfile } =
     useGetProfileByOwner(address!);
-  const [profile, username] = (profileResult as [unknown, string] | undefined) || [
-    null,
-    "",
-  ];
+  const [profile, username] = (profileResult as
+    | [unknown, string]
+    | undefined) || [null, ""];
   const hasProfile = !!profile;
 
   if (loadingProfile || loadingAnalytics) {
@@ -56,7 +59,9 @@ function DashboardContent() {
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main"></div>
             <p className="text-foreground/60 text-center">
-              {loadingProfile ? "Checking your profile..." : "Loading analytics..."}
+              {loadingProfile
+                ? "Checking your profile..."
+                : "Loading analytics..."}
             </p>
           </CardContent>
         </Card>
@@ -156,7 +161,10 @@ function DashboardContent() {
               title="Conversions 📈"
               value={stats.totalPayments}
               icon={<TrendingUp className="h-4 w-4" />}
-              trend={{ value: stats.conversionRate, isPositive: stats.conversionRate > 0 }}
+              trend={{
+                value: stats.conversionRate,
+                isPositive: stats.conversionRate > 0,
+              }}
             />
           </div>
           <div className="hover:scale-105 transition-transform duration-300">

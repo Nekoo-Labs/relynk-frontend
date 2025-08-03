@@ -97,7 +97,7 @@ export class UnifiedIPFSService {
         type: "application/json",
       });
 
-      // Upload with keyvalues metadata for tracking
+      // Upload using Pinata SDK with signed URL (safe for client-side)
       const upload = await pinata.upload.public
         .file(file)
         .keyvalues({
@@ -299,7 +299,7 @@ export class UnifiedIPFSService {
         }
       );
 
-      // Upload using the signed URL
+      // Upload using Pinata SDK with signed URL (safe for client-side)
       const upload = await pinata.upload.public
         .file(file)
         .keyvalues({
