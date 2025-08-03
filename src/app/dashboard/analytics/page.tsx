@@ -25,6 +25,9 @@ import {
   useTopPerformingLinks,
   useRevenueTrends,
 } from "@/hooks/use-analytics";
+import { usePaymentLinks } from "@/hooks/use-payment-links";
+import { SUPPORTED_TOKENS } from "@/lib/contracts";
+import { exportCompleteAnalytics } from "@/lib/csv-export";
 
 type TimeRange = "7d" | "30d" | "90d" | "1y";
 
@@ -41,6 +44,7 @@ export default function AnalyticsPage() {
 
   // Fetch analytics data using React Query
   const { stats, linkAnalytics, isLoading, error, refresh } = useAnalytics();
+  const { data: paymentLinks = [] } = usePaymentLinks(address);
   const timeRangeAnalytics = useTimeRangeAnalytics(selectedTimeRange);
   const topPerformingLinks = useTopPerformingLinks(5);
   // Map 1y to 90d for revenue trends since the hook doesn't support 1y
@@ -49,6 +53,25 @@ export default function AnalyticsPage() {
       ? "90d"
       : (selectedTimeRange as "7d" | "30d" | "90d");
   const revenueTrends = useRevenueTrends(revenueTrendsTimeRange);
+
+  // Handle CSV export
+  const handleExportCSV = () => {
+    if (!stats || !linkAnalytics || !paymentLinks) {
+      return;
+    }
+
+    try {
+      exportCompleteAnalytics(
+        stats,
+        paymentLinks,
+        linkAnalytics,
+        selectedTimeRange
+      );
+    } catch (error) {
+      console.error("Failed to export CSV:", error);
+      // You could add a toast notification here
+    }
+  };
 
   // Show wallet connection prompt if not connected
   if (!isConnected) {
@@ -94,7 +117,11 @@ export default function AnalyticsPage() {
               />
               Refresh
             </Button>
-            <Button className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow">
+            <Button 
+              className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow"
+              onClick={handleExportCSV}
+              disabled={isLoading || !stats}
+            >
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
