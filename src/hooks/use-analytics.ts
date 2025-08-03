@@ -10,7 +10,10 @@ import {
   DashboardData,
 } from "@/types/relynk";
 import { Address, formatUnits } from "viem";
-import { fetchCreatorAnalytics, type CreatorAnalyticsData } from "@/services/graphql";
+import {
+  fetchCreatorAnalytics,
+  type CreatorAnalyticsData,
+} from "@/services/graphql";
 import { SUPPORTED_TOKENS } from "@/lib/contracts";
 
 // Convert SUPPORTED_TOKENS object to array for easier iteration
@@ -18,16 +21,20 @@ const SUPPORTED_TOKENS_ARRAY = Object.values(SUPPORTED_TOKENS);
 
 // Helper function to format token amounts
 function formatTokenAmount(amount: string, tokenAddress: string): string {
-  const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
+  const token = SUPPORTED_TOKENS_ARRAY.find(
+    (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
+  );
   if (!token) return "0";
-  
+
   return formatUnits(BigInt(amount), token.decimals);
 }
 
 // Helper function to get token symbol
 function getTokenSymbol(tokenAddress: string): string {
-  const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
-  return token?.symbol || 'UNKNOWN';
+  const token = SUPPORTED_TOKENS_ARRAY.find(
+    (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
+  );
+  return token?.symbol || "UNKNOWN";
 }
 
 // Helper function to calculate USD value (simplified - in real app you'd fetch current prices)
@@ -39,7 +46,7 @@ function calculateUSDValue(amount: string, tokenSymbol: string): number {
     USDT: 1.0,
     IDRX: 0.000065, // Assuming 1 IDRX = 0.000065 USD (mock rate)
   };
-  
+
   return numAmount * (rates[tokenSymbol] || 0);
 }
 
@@ -55,9 +62,15 @@ export function useAnalytics() {
   } = usePaymentLinks(address);
 
   // Fetch real analytics data from GraphQL
-  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
-    queryKey: ['creator-analytics', address],
-    queryFn: () => address ? fetchCreatorAnalytics(address) : null,
+  const {
+    data: analyticsData,
+    isLoading: analyticsLoading,
+    error: analyticsError,
+    refetch: refetchAnalytics,
+    isRefetching: analyticsRefetching,
+  } = useQuery({
+    queryKey: ["creator-analytics", address],
+    queryFn: () => (address ? fetchCreatorAnalytics(address) : null),
     enabled: !!address,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 30 * 1000, // Refetch every 30 seconds
@@ -72,7 +85,11 @@ export function useAnalytics() {
       };
     }
 
-    const stats = calculateCreatorStats(analyticsData || undefined, paymentLinks, address);
+    const stats = calculateCreatorStats(
+      analyticsData || undefined,
+      paymentLinks,
+      address
+    );
     const linkAnalytics = paymentLinks.map((link) =>
       calculateLinkAnalytics(link)
     );
@@ -91,9 +108,10 @@ export function useAnalytics() {
 
   return {
     ...analytics,
-    isLoading: linksLoading || analyticsLoading,
+    isLoading: linksLoading || analyticsLoading || analyticsRefetching,
     error: linksError || analyticsError,
     refresh: () => {
+      refetchAnalytics();
       // This will be handled by the payment links query invalidation
     },
   };
@@ -118,10 +136,16 @@ function calculateCreatorStats(
   const formattedTotalEarnings: Record<Address, string> = {};
 
   if (analyticsData) {
-    const { payments, donations, productPurchases, contentPurchases } = analyticsData;
-    
+    const { payments, donations, productPurchases, contentPurchases } =
+      analyticsData;
+
     // Process all transaction types
-    [...payments, ...donations, ...productPurchases, ...contentPurchases].forEach(tx => {
+    [
+      ...payments,
+      ...donations,
+      ...productPurchases,
+      ...contentPurchases,
+    ].forEach((tx) => {
       const tokenAddress = tx.token as Address;
       const amount = BigInt(tx.amount);
 
@@ -131,9 +155,14 @@ function calculateCreatorStats(
 
       totalEarnings[tokenAddress] += amount;
 
-      const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
+      const token = SUPPORTED_TOKENS_ARRAY.find(
+        (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
+      );
       if (token) {
-        formattedTotalEarnings[tokenAddress] = formatUnits(totalEarnings[tokenAddress], token.decimals);
+        formattedTotalEarnings[tokenAddress] = formatUnits(
+          totalEarnings[tokenAddress],
+          token.decimals
+        );
       }
     });
   }
@@ -154,28 +183,34 @@ function calculateCreatorStats(
   const monthlyEarnings = calculateMonthlyEarnings(analyticsData);
 
   // Calculate real metrics from analytics data
-  const totalPayments = analyticsData ? 
-    analyticsData.payments.length + analyticsData.donations.length + 
-    analyticsData.productPurchases.length + analyticsData.contentPurchases.length : 0;
+  const totalPayments = analyticsData
+    ? analyticsData.payments.length +
+      analyticsData.donations.length +
+      analyticsData.productPurchases.length +
+      analyticsData.contentPurchases.length
+    : 0;
   const totalClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0);
   const totalViews = links.reduce((sum, link) => sum + (link.views || 0), 0);
 
   // Calculate average order value per token
   const averageOrderValue: Record<Address, bigint> = {};
   Object.entries(totalEarnings).forEach(([tokenAddress, totalAmount]) => {
-    averageOrderValue[tokenAddress as Address] = totalPayments > 0 ? totalAmount / BigInt(totalPayments) : BigInt(0);
+    averageOrderValue[tokenAddress as Address] =
+      totalPayments > 0 ? totalAmount / BigInt(totalPayments) : BigInt(0);
   });
 
   // Calculate total volume in USD
   let totalVolumeUSD = 0;
   Object.entries(totalEarnings).forEach(([tokenAddress, amount]) => {
-      const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
-      if (token) {
-        const formattedAmount = formatUnits(amount, token.decimals);
-        const usdValue = calculateUSDValue(formattedAmount, token.symbol);
-        totalVolumeUSD += usdValue;
-      }
-    });
+    const token = SUPPORTED_TOKENS_ARRAY.find(
+      (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
+    );
+    if (token) {
+      const formattedAmount = formatUnits(amount, token.decimals);
+      const usdValue = calculateUSDValue(formattedAmount, token.symbol);
+      totalVolumeUSD += usdValue;
+    }
+  });
 
   return {
     address: creator,
@@ -199,31 +234,41 @@ function calculateCreatorStats(
 /**
  * Calculate monthly earnings from transaction data
  */
-function calculateMonthlyEarnings(analyticsData: CreatorAnalyticsData | undefined): Record<string, Record<Address, bigint>> {
+function calculateMonthlyEarnings(
+  analyticsData: CreatorAnalyticsData | undefined
+): Record<string, Record<Address, bigint>> {
   const monthlyEarnings: Record<string, Record<Address, bigint>> = {};
-  
+
   if (!analyticsData) return monthlyEarnings;
-  
-  const { payments, donations, productPurchases, contentPurchases } = analyticsData;
-  const allTransactions = [...payments, ...donations, ...productPurchases, ...contentPurchases];
-  
-  allTransactions.forEach(tx => {
+
+  const { payments, donations, productPurchases, contentPurchases } =
+    analyticsData;
+  const allTransactions = [
+    ...payments,
+    ...donations,
+    ...productPurchases,
+    ...contentPurchases,
+  ];
+
+  allTransactions.forEach((tx) => {
     const date = new Date(parseInt(tx.timestamp_) * 1000);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthKey = `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}`;
     const tokenAddress = tx.token as Address;
     const amount = BigInt(tx.amount);
-    
+
     if (!monthlyEarnings[monthKey]) {
       monthlyEarnings[monthKey] = {};
     }
-    
+
     if (!monthlyEarnings[monthKey][tokenAddress]) {
       monthlyEarnings[monthKey][tokenAddress] = BigInt(0);
     }
-    
+
     monthlyEarnings[monthKey][tokenAddress] += amount;
   });
-  
+
   return monthlyEarnings;
 }
 
@@ -235,23 +280,34 @@ function calculateLinkAnalytics(link: PaymentLink): LinkAnalytics {
   const views = Math.floor(Math.random() * 100 + 10);
   const clicks = Math.floor(Math.random() * 50 + 5);
   const payments = Math.floor(Math.random() * 10 + 1);
-  
+
   // Find the token to get correct decimals
-  const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === link.token.toLowerCase());
+  const token = SUPPORTED_TOKENS_ARRAY.find(
+    (t) => t.address.toLowerCase() === link.token.toLowerCase()
+  );
   const decimals = token?.decimals || 18;
-  const tokenSymbol = token?.symbol || 'UNKNOWN';
-  
+  const tokenSymbol = token?.symbol || "UNKNOWN";
+
   // Calculate total amount using correct decimals
-  const totalAmount = BigInt(parseFloat(link.amount) * Math.pow(10, decimals)) * BigInt(payments);
-  const averageAmount = payments > 0 ? totalAmount / BigInt(payments) : BigInt(0);
+  const totalAmount =
+    BigInt(parseFloat(link.amount) * Math.pow(10, decimals)) * BigInt(payments);
+  const averageAmount =
+    payments > 0 ? totalAmount / BigInt(payments) : BigInt(0);
 
   // Format amounts in token units
-  const formattedTotalAmount = formatTokenAmount(totalAmount.toString(), link.token);
-  const formattedAverageAmount = payments > 0 ? formatTokenAmount(averageAmount.toString(), link.token) : "0";
-  
+  const formattedTotalAmount = formatTokenAmount(
+    totalAmount.toString(),
+    link.token
+  );
+  const formattedAverageAmount =
+    payments > 0
+      ? formatTokenAmount(averageAmount.toString(), link.token)
+      : "0";
+
   // Calculate USD values
   const totalAmountUSD = calculateUSDValue(formattedTotalAmount, tokenSymbol);
-  const averageAmountUSD = payments > 0 ? calculateUSDValue(formattedAverageAmount, tokenSymbol) : 0;
+  const averageAmountUSD =
+    payments > 0 ? calculateUSDValue(formattedAverageAmount, tokenSymbol) : 0;
 
   return {
     title: link.title,
@@ -262,8 +318,12 @@ function calculateLinkAnalytics(link: PaymentLink): LinkAnalytics {
     conversionRate: clicks > 0 ? (payments / clicks) * 100 : 0,
     totalAmount,
     averageAmount,
-    formattedTotalAmount: `${parseFloat(formattedTotalAmount).toFixed(4)} ${tokenSymbol}`,
-    formattedAverageAmount: `${parseFloat(formattedAverageAmount).toFixed(4)} ${tokenSymbol}`,
+    formattedTotalAmount: `${parseFloat(formattedTotalAmount).toFixed(
+      4
+    )} ${tokenSymbol}`,
+    formattedAverageAmount: `${parseFloat(formattedAverageAmount).toFixed(
+      4
+    )} ${tokenSymbol}`,
     formattedTotalAmountUSD: totalAmountUSD.toFixed(2),
     formattedAverageAmountUSD: averageAmountUSD.toFixed(2),
     topPaymentAmount: totalAmount,
@@ -295,14 +355,15 @@ function createDashboardData(
     stats,
     links,
     analytics,
-    tokens: SUPPORTED_TOKENS_ARRAY.map(token => ({
+    tokens: SUPPORTED_TOKENS_ARRAY.map((token) => ({
       address: token.address,
       symbol: token.symbol,
       name: token.name,
       decimals: token.decimals,
       isNative: false,
       logoUrl: `/tokens/${token.symbol.toLowerCase()}.svg`,
-      priceUSD: token.symbol === 'USDC' || token.symbol === 'USDT' ? 1 : 0.000065, // Mock prices
+      priceUSD:
+        token.symbol === "USDC" || token.symbol === "USDT" ? 1 : 0.000065, // Mock prices
     })),
     recentActivity: [], // Would be populated from blockchain events
     pendingWithdrawals: {}, // Would be calculated from contract state
@@ -407,14 +468,19 @@ export function useRevenueTrends(timeRange: "7d" | "30d" | "90d" = "30d") {
   return useMemo(() => {
     const trends = Object.entries(stats.monthlyEarnings)
       .map(([month, earnings]) => {
-        const totalUSD = Object.entries(earnings).reduce((sum, [tokenAddress, amount]) => {
-          const token = SUPPORTED_TOKENS_ARRAY.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
-          if (!token) return sum;
-          
-          const formattedAmount = formatUnits(amount, token.decimals);
-          const usdValue = calculateUSDValue(formattedAmount, token.symbol);
-          return sum + usdValue;
-        }, 0);
+        const totalUSD = Object.entries(earnings).reduce(
+          (sum, [tokenAddress, amount]) => {
+            const token = SUPPORTED_TOKENS_ARRAY.find(
+              (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
+            );
+            if (!token) return sum;
+
+            const formattedAmount = formatUnits(amount, token.decimals);
+            const usdValue = calculateUSDValue(formattedAmount, token.symbol);
+            return sum + usdValue;
+          },
+          0
+        );
 
         return {
           month,
