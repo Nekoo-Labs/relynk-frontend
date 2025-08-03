@@ -145,11 +145,6 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
     return token?.decimals || SUPPORTED_TOKENS.USDC.decimals;
   };
 
-  const getTokenSymbol = (currency: string): string => {
-    const token = SUPPORTED_TOKENS[currency as keyof typeof SUPPORTED_TOKENS];
-    return token?.symbol || SUPPORTED_TOKENS.USDC.symbol;
-  };
-
   // Handle image upload
   const handleImageUpload = async (file: File) => {
     try {
@@ -191,12 +186,12 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
   // Key changes to fix the signature issue in handleSubmit function
 
   const handleSubmit = async (data: LinkFormUIData) => {
-    console.log("handleSubmit called with:", {
-      address,
-      isConnected,
-      isConnecting,
-      type: typeof address,
-    });
+    // console.log("handleSubmit called with:", {
+    //   address,
+    //   isConnected,
+    //   isConnecting,
+    //   type: typeof address,
+    // });
 
     if (!isConnected || !address) {
       toast.error("Please connect your wallet first");
@@ -238,7 +233,7 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
       if (preparedImage) {
         try {
           imageUrl = await ImageUploadService.uploadImage(preparedImage.file);
-          console.log("Image uploaded to IPFS:", imageUrl);
+          // console.log("Image uploaded to IPFS:", imageUrl);
         } catch (imageError) {
           console.error("Failed to upload image:", imageError);
           throw new Error(
@@ -250,9 +245,9 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
       }
 
       // Debug currency and token address
-      console.log("Form data currency:", data.currency);
+      // console.log("Form data currency:", data.currency);
       const tokenAddress = getTokenAddress(data.currency);
-      console.log("Token address for currency:", tokenAddress);
+      // console.log("Token address for currency:", tokenAddress);
 
       // Transform UI data to contract data
       const contractData = transformUIDataToContractData(
@@ -266,8 +261,8 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
         ? parseUnits(data.amount, tokenDecimals).toString()
         : "0";
 
-      console.log("Token decimals:", tokenDecimals);
-      console.log("Formatted amount:", formattedAmount);
+      // console.log("Token decimals:", tokenDecimals);
+      // console.log("Formatted amount:", formattedAmount);
 
       // Create comprehensive metadata FIRST (before creating LinkData)
       const linkFormData: CreateLinkFormData = {
@@ -286,24 +281,24 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
         images: preparedImage ? [preparedImage.file] : undefined,
       };
 
-      console.log("Creating metadata with linkFormData:", linkFormData);
+      // console.log("Creating metadata with linkFormData:", linkFormData);
       const { MetadataCreator } = await import("@/lib/metadata-creator");
 
       const comprehensiveMetadata = await MetadataCreator.createMetadata(
         linkFormData
       );
-      console.log("Metadata created:", comprehensiveMetadata);
+      // console.log("Metadata created:", comprehensiveMetadata);
 
       // Store metadata to IPFS and get the hash
       const { UnifiedIPFSService } = await import("@/lib/unified-ipfs-service");
       const ipfsHash = await UnifiedIPFSService.storeMetadata(
         comprehensiveMetadata
       );
-      console.log("Metadata stored to IPFS with hash:", ipfsHash);
+      // console.log("Metadata stored to IPFS with hash:", ipfsHash);
 
       // NOW create link data with the IPFS hash as metadata
       // This ensures the signature is created with the final metadata value
-      console.log("Creating link data with address:", address);
+      // console.log("Creating link data with address:", address);
       const linkData = await createLinkData(
         {
           ...linkFormData,
@@ -314,20 +309,20 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
       );
 
       // Debug: Log the returned linkData
-      console.log("Returned linkData:", linkData);
-      console.log(
-        "linkData.creator:",
-        linkData.creator,
-        "type:",
-        typeof linkData.creator
-      );
-      console.log(
-        "linkData.token:",
-        linkData.token,
-        "type:",
-        typeof linkData.token
-      );
-      console.log("linkData.metadata:", linkData.metadata);
+      // console.log("Returned linkData:", linkData);
+      // console.log(
+      //   "linkData.creator:",
+      //   linkData.creator,
+      //   "type:",
+      //   typeof linkData.creator
+      // );
+      // console.log(
+      //   "linkData.token:",
+      //   linkData.token,
+      //   "type:",
+      //   typeof linkData.token
+      // );
+      // console.log("linkData.metadata:", linkData.metadata);
 
       // IMPORTANT: Ensure all BigInt fields are properly formatted
       const signableLinkData = {
@@ -338,23 +333,23 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
       };
 
       // Sign the link data using proper Ethereum signed message format
-      console.log("Creating link data hash...");
+      // console.log("Creating link data hash...");
       const { createLinkDataHash } = await import("@/lib/signature-utils");
       const linkDataHash = createLinkDataHash(signableLinkData);
-      console.log("Link data hash created:", linkDataHash);
+      // console.log("Link data hash created:", linkDataHash);
 
-      console.log("Requesting signature...");
+      // console.log("Requesting signature...");
       const signature = await new Promise<`0x${string}`>((resolve, reject) => {
         // Use the raw hash - signMessage will add the Ethereum signed message prefix
         signMessage(
           { message: { raw: linkDataHash } },
           {
             onSuccess: (data) => {
-              console.log("Signature successful:", data);
+              // console.log("Signature successful:", data);
               resolve(data);
             },
             onError: (error) => {
-              console.log("Signature error:", error);
+              // console.log("Signature error:", error);
               reject(error);
             },
           }
@@ -363,12 +358,12 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
 
       // Store the complete payment link using React Query mutation
       // Pass the signed LinkData (with IPFS hash) and the signature
-      console.log("Storing payment link with mutation...");
-      console.log("Mutation data:", {
-        linkData: signableLinkData,
-        signature,
-        metadata: comprehensiveMetadata,
-      });
+      // console.log("Storing payment link with mutation...");
+      // console.log("Mutation data:", {
+      //   linkData: signableLinkData,
+      //   signature,
+      //   metadata: comprehensiveMetadata,
+      // });
 
       await createPaymentLinkMutation.mutateAsync({
         linkData: signableLinkData, // Use the signable version with proper BigInt
@@ -376,12 +371,12 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
         metadata: comprehensiveMetadata,
       });
 
-      console.log("Payment link stored successfully");
+      // console.log("Payment link stored successfully");
 
-      console.log("Link created successfully:", {
-        linkId: signableLinkData.linkId,
-        signature,
-      });
+      // console.log("Link created successfully:", {
+      //   linkId: signableLinkData.linkId,
+      //   signature,
+      // });
 
       // Reset the form
       form.reset();
@@ -413,7 +408,7 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
           errorName.includes("cancelled")
         ) {
           // User cancelled - don't show error, just reset state
-          console.log("User cancelled signature request");
+          // console.log("User cancelled signature request");
           setIsCancelled(true);
           return; // Exit early without showing error
         } else {

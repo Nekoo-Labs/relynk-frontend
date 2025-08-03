@@ -68,6 +68,7 @@ export function useProfileByOwner(owner?: Address) {
     enabled: !!profile?.ipfsHash && !!owner,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnMount: false,
   });
 
   // Calculate overall loading state - we're loading if contract is loading OR if we have a profile but IPFS is loading
@@ -83,138 +84,6 @@ export function useProfileByOwner(owner?: Address) {
   };
 }
 
-// Mock function to fetch profile data from IPFS (for demo purposes)
-const fetchMockProfileData = async (username: string): Promise<ProfileData> => {
-  const mockProfiles: Record<string, ProfileData> = {
-    xfajarr: {
-      name: "xfajarr | CEO Femboy Famz",
-      bio: "Creating beautiful digital products & templates ✨ Supporting my journey through crypto payments 🌸",
-      avatar: "",
-      links: [
-        {
-          id: "1",
-          title: "🎨 Premium Design Pack 2024",
-          url: "/pay/design-pack-2024",
-          description: "Complete UI/UX design system with 50+ components",
-          icon: "🎨",
-          isActive: true,
-          order: 0,
-          type: "product",
-        },
-        {
-          id: "2",
-          title: "☕ Buy Me Coffee",
-          url: "/pay/coffee-support",
-          description: "Support my creative work with a coffee",
-          icon: "☕",
-          isActive: true,
-          order: 1,
-          type: "donation",
-        },
-        {
-          id: "3",
-          title: "💬 1:1 Design Consultation",
-          url: "/pay/design-consultation",
-          description: "Get personalized design advice and feedback",
-          icon: "💬",
-          isActive: true,
-          order: 2,
-          type: "payment",
-        },
-      ],
-      theme: {
-        backgroundColor: "#fef7ff",
-        textColor: "#1f2937",
-        accentColor: "#ec4899",
-        buttonStyle: "rounded",
-        backgroundType: "solid",
-      },
-      socialLinks: {
-        twitter: "https://twitter.com/xfajarr",
-        instagram: "https://instagram.com/xfajarr",
-      },
-    },
-    johndoe: {
-      name: "John Doe",
-      bio: "Web3 developer and crypto enthusiast. Building the future of decentralized applications.",
-      avatar: "",
-      links: [
-        {
-          id: "1",
-          title: "My Portfolio Website",
-          url: "https://johndoe.com",
-          description: "Check out my latest projects and work",
-          icon: "🌐",
-          isActive: true,
-          order: 0,
-          type: "link",
-        },
-        {
-          id: "2",
-          title: "Buy Me Coffee ☕",
-          url: "/pay/coffee-donation",
-          description: "Support my open source work",
-          icon: "☕",
-          isActive: true,
-          order: 1,
-          type: "donation",
-        },
-        {
-          id: "3",
-          title: "Premium Web3 Course",
-          url: "/pay/web3-course",
-          description: "Learn Web3 development from scratch",
-          icon: "📚",
-          isActive: true,
-          order: 2,
-          type: "product",
-        },
-        {
-          id: "4",
-          title: "Consultation Call",
-          url: "/pay/consultation",
-          description: "1-hour Web3 consultation session",
-          icon: "💬",
-          isActive: true,
-          order: 3,
-          type: "payment",
-        },
-      ],
-      theme: {
-        backgroundColor: "#0f172a",
-        textColor: "#f8fafc",
-        accentColor: "#3b82f6",
-        buttonStyle: "rounded",
-        backgroundType: "solid",
-      },
-      socialLinks: {
-        twitter: "https://twitter.com/johndoe",
-        github: "https://github.com/johndoe",
-        linkedin: "https://linkedin.com/in/johndoe",
-      },
-    },
-  };
-
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  return (
-    mockProfiles[username] || {
-      name: username,
-      bio: "Welcome to my profile!",
-      links: [],
-      theme: {
-        backgroundColor: "#ffffff",
-        textColor: "#000000",
-        accentColor: "#3b82f6",
-        buttonStyle: "rounded",
-        backgroundType: "solid",
-      },
-      socialLinks: {},
-    }
-  );
-};
-
 // Hook to get profile by username with IPFS data
 export function useProfileByUsername(username: string) {
   const { useGetProfile, getProfileData } = useProfileRegistry();
@@ -228,7 +97,6 @@ export function useProfileByUsername(username: string) {
 
   const typedProfile = profile as Profile | undefined;
 
-  // Get IPFS data using React Query
   const {
     data: profileData,
     isLoading: isLoadingIPFS,
@@ -257,22 +125,21 @@ export function useProfileByUsername(username: string) {
             },
           } as ProfileData;
         }
-      } else if (!isLoadingContract && !typedProfile) {
-        // Profile doesn't exist, show mock data for demo
-        return await fetchMockProfileData(username);
       }
+
       return null;
     },
-    enabled: !!username && (!isLoadingContract || !!typedProfile?.ipfsHash),
+    enabled: !!username, // Always enabled when username exists
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   return {
     profile: typedProfile,
     profileData,
     isLoading: isLoadingContract || isLoadingIPFS,
-    error: contractError || ipfsError,
+    error: ipfsError || contractError,
     refetch: refetchIPFS,
   };
 }

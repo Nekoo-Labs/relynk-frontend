@@ -18,6 +18,7 @@ export async function GET(
   try {
     const { files } = await pinata.files.public.list().keyvalues({
       creator: address?.toLowerCase(),
+      type: "payment-link", // Only return payment link files, not profile data
     });
 
     return NextResponse.json(files, { status: 200 });
