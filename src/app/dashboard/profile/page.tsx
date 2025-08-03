@@ -21,7 +21,7 @@ export default function ProfilePage() {
 
   // Get user's profile
   const { data: profileResult, isLoading, error } = useGetProfileByOwner(address!);
-  const [profile, username] = profileResult || [null, ''];
+  const [profile, username] = (profileResult as [any, string] | undefined) || [null, ''];
 
   // Mock function to fetch profile data from IPFS
   const fetchProfileData = async (ipfsHash: string): Promise<ProfileData> => {

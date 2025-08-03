@@ -26,7 +26,7 @@ const handler = NextAuth({
           }
 
           const siwe = new SiweMessage(JSON.parse(credentials.message));
-          
+
           // Use the domain from the SIWE message instead of NEXTAUTH_URL
           const result = await siwe.verify({
             signature: credentials.signature,
@@ -55,7 +55,7 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET || "fallback-secret-for-development",
   callbacks: {
     async session({ session, token }) {
-      console.log("Session callback:", { session, token });
+      // console.log("Session callback:", { session, token });
       if (token.address) {
         session.address = token.address;
         if (session.user) {
@@ -65,7 +65,7 @@ const handler = NextAuth({
       return session;
     },
     async jwt({ token, user }) {
-      console.log("JWT callback:", { token, user });
+      // console.log("JWT callback:", { token, user });
       if (user?.address) {
         token.address = user.address;
         token.sub = user.address;

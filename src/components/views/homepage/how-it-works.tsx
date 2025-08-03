@@ -166,8 +166,8 @@ export default function HowItWorksSection() {
                       4. Customer Pays
                     </h3>
                     <p className="text-gray-700 leading-relaxed">
-                      Buyer connects wallet and pays with stablecoins (USDC,
-                      USDT)
+                      Buyer connects wallet and pays with ETH or supported tokens (USDC,
+                      IDRX)
                     </p>
                   </CardContent>
                 </Card>

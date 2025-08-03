@@ -1,24 +1,24 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { ProfileData, ProfileLink } from '@/types/profile';
-import { 
-  ExternalLink, 
-  Share2, 
-  Copy, 
-  Twitter, 
-  Instagram, 
-  Linkedin, 
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { ProfileData, ProfileLink } from "@/types/profile";
+import {
+  ExternalLink,
+  Share2,
+  Copy,
+  Twitter,
+  Instagram,
+  Linkedin,
   Github,
   MessageCircle,
   Send,
   Youtube,
-  Music
-} from 'lucide-react';
+  Music,
+} from "lucide-react";
 
 interface ProfileDisplayProps {
   username: string;
@@ -38,26 +38,32 @@ const socialIcons = {
 };
 
 const linkTypeColors = {
-  link: 'bg-blue-500',
-  payment: 'bg-green-500',
-  donation: 'bg-yellow-500',
-  product: 'bg-purple-500',
-  content: 'bg-pink-500',
+  link: "bg-blue-500",
+  payment: "bg-green-500",
+  donation: "bg-yellow-500",
+  product: "bg-purple-500",
+  content: "bg-pink-500",
 };
 
 const linkTypeEmojis = {
-  link: '🔗',
-  payment: '💳',
-  donation: '💝',
-  product: '🛍️',
-  content: '📄',
+  link: "🔗",
+  payment: "💳",
+  donation: "💝",
+  product: "🛍️",
+  content: "📄",
 };
 
-export function ProfileDisplay({ username, profileData, isOwner = false }: ProfileDisplayProps) {
+export function ProfileDisplay({
+  username,
+  profileData,
+  isOwner = false,
+}: ProfileDisplayProps) {
   const [copied, setCopied] = useState(false);
   const [clickedLinks, setClickedLinks] = useState<Set<string>>(new Set());
 
-  const profileUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${username}`;
+  const profileUrl = `${
+    typeof window !== "undefined" ? window.location.origin : ""
+  }/${username}`;
 
   const copyProfileUrl = async () => {
     try {
@@ -65,34 +71,35 @@ export function ProfileDisplay({ username, profileData, isOwner = false }: Profi
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy URL:', error);
+      console.error("Failed to copy URL:", error);
     }
   };
 
   const handleLinkClick = (link: ProfileLink) => {
-    setClickedLinks(prev => new Set([...prev, link.id]));
-    
+    setClickedLinks((prev) => new Set([...prev, link.id]));
+
     // Track click analytics here if needed
-    console.log('Link clicked:', link);
-    
+    console.log("Link clicked:", link);
+
     // Open link
-    if (link.type === 'link') {
-      window.open(link.url, '_blank', 'noopener,noreferrer');
+    if (link.type === "link") {
+      window.open(link.url, "_blank", "noopener,noreferrer");
     } else {
       // For payment/donation/product links, handle differently
       // This would integrate with your payment system
-      window.open(link.url, '_blank', 'noopener,noreferrer');
+      window.open(link.url, "_blank", "noopener,noreferrer");
     }
   };
 
   const getButtonStyle = () => {
-    const { buttonStyle, accentColor } = profileData.theme;
-    const baseClasses = 'w-full p-4 text-left transition-all duration-200 hover:scale-105 hover:shadow-lg';
-    
+    const { buttonStyle, accentColor } = profileData.theme || { buttonStyle: 'rounded', accentColor: '#3b82f6' };
+    const baseClasses =
+      "w-full p-4 text-left transition-all duration-200 hover:scale-105 hover:shadow-lg";
+
     switch (buttonStyle) {
-      case 'square':
+      case "square":
         return `${baseClasses} rounded-none`;
-      case 'pill':
+      case "pill":
         return `${baseClasses} rounded-full`;
       default:
         return `${baseClasses} rounded-lg`;
@@ -100,32 +107,40 @@ export function ProfileDisplay({ username, profileData, isOwner = false }: Profi
   };
 
   const activeLinks = profileData.links
-    .filter(link => link.isActive)
+    .filter((link) => link.isActive)
     .sort((a, b) => a.order - b.order);
 
-  const activeSocialLinks = Object.entries(profileData.socialLinks || {})
-    .filter(([_, url]) => url && url.trim() !== '');
+  const activeSocialLinks = Object.entries(
+    profileData.socialLinks || {}
+  ).filter(([_, url]) => url && url.trim() !== "");
 
   return (
-    <div 
-      className="min-h-screen p-4"
-      style={{ 
-        backgroundColor: profileData.theme.backgroundColor,
-        color: profileData.theme.textColor 
+    <div
+      className="min-h-screen p-4 flex flex-col"
+      style={{
+        backgroundColor: profileData?.theme?.backgroundColor,
+        color: profileData?.theme?.textColor,
       }}
     >
-      <div className="max-w-md mx-auto space-y-6">
+      <div className="max-w-md flex-1 h-full mx-auto space-y-6 flex flex-col">
         {/* Header */}
         <div className="text-center space-y-4">
           {/* Avatar */}
           <div className="flex justify-center">
             <Avatar className="w-24 h-24">
               {profileData.avatar ? (
-                <img src={profileData.avatar} alt={profileData.name} className="w-full h-full object-cover" />
+                <img
+                  src={profileData.avatar}
+                  alt={profileData.name}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div 
+                <div
                   className="w-full h-full flex items-center justify-center text-2xl font-bold"
-                  style={{ backgroundColor: profileData.theme.accentColor, color: '#fff' }}
+                  style={{
+                    backgroundColor: profileData?.theme?.accentColor,
+                    color: "#fff",
+                  }}
                 >
                   {profileData.name.charAt(0).toUpperCase()}
                 </div>
@@ -138,7 +153,9 @@ export function ProfileDisplay({ username, profileData, isOwner = false }: Profi
             <h1 className="text-2xl font-bold mb-2">{profileData.name}</h1>
             <p className="text-sm opacity-80">@{username}</p>
             {profileData.bio && (
-              <p className="mt-3 text-sm leading-relaxed opacity-90">{profileData.bio}</p>
+              <p className="mt-3 text-sm leading-relaxed opacity-90">
+                {profileData.bio}
+              </p>
             )}
           </div>
 
@@ -146,16 +163,19 @@ export function ProfileDisplay({ username, profileData, isOwner = false }: Profi
           {activeSocialLinks.length > 0 && (
             <div className="flex justify-center gap-3">
               {activeSocialLinks.map(([platform, url]) => {
-                const IconComponent = socialIcons[platform as keyof typeof socialIcons];
+                const IconComponent =
+                  socialIcons[platform as keyof typeof socialIcons];
                 if (!IconComponent) return null;
-                
+
                 return (
                   <Button
                     key={platform}
-                    variant="outline"
+                    variant="noShadow"
                     size="sm"
                     className="p-2"
-                    onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+                    onClick={() =>
+                      window.open(url, "_blank", "noopener,noreferrer")
+                    }
                   >
                     <IconComponent className="w-4 h-4" />
                   </Button>
@@ -167,7 +187,7 @@ export function ProfileDisplay({ username, profileData, isOwner = false }: Profi
           {/* Share Button */}
           <div className="flex justify-center gap-2">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={copyProfileUrl}
               className="flex items-center gap-2"
@@ -193,9 +213,9 @@ export function ProfileDisplay({ username, profileData, isOwner = false }: Profi
             <Card
               key={link.id}
               className={`${getButtonStyle()} cursor-pointer border-2 hover:border-opacity-50`}
-              style={{ 
-                borderColor: profileData.theme.accentColor,
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              style={{
+                borderColor: profileData?.theme?.accentColor,
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
               }}
               onClick={() => handleLinkClick(link)}
             >
@@ -207,23 +227,27 @@ export function ProfileDisplay({ username, profileData, isOwner = false }: Profi
                       <span className="text-lg">
                         {linkTypeEmojis[link.type]}
                       </span>
-                      <Badge 
-                        variant="secondary" 
-                        className={`${linkTypeColors[link.type]} text-white text-xs`}
+                      <Badge
+                        variant="secondary"
+                        className={`${
+                          linkTypeColors[link.type]
+                        } text-white text-xs`}
                       >
                         {link.type}
                       </Badge>
                     </div>
-                    
+
                     {/* Link Content */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold truncate">{link.title}</h3>
                       {link.description && (
-                        <p className="text-sm opacity-75 truncate">{link.description}</p>
+                        <p className="text-sm opacity-75 truncate">
+                          {link.description}
+                        </p>
                       )}
                     </div>
                   </div>
-                  
+
                   <ExternalLink className="w-4 h-4 opacity-60" />
                 </div>
               </CardContent>
@@ -242,10 +266,8 @@ export function ProfileDisplay({ username, profileData, isOwner = false }: Profi
         )}
 
         {/* Footer */}
-        <div className="text-center pt-8 pb-4">
-          <p className="text-xs opacity-50">
-            Powered by Relynk ⚡
-          </p>
+        <div className="text-center pt-8 pb-4 mt-auto">
+          <p className="text-xs opacity-50">Powered by Relynk ⚡</p>
         </div>
       </div>
     </div>

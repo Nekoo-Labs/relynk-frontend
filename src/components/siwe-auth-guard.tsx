@@ -12,8 +12,8 @@ interface SiweAuthGuardProps {
 }
 
 export function SiweAuthGuard({ children }: SiweAuthGuardProps) {
-  const { isAuthenticated, isConnecting } = useRequireSiweAuth();
-  const { signInWithEthereum, isLoading } = useSiweAuth();
+  // Use only one hook instance to prevent conflicts
+  const { isAuthenticated, isConnecting, signInWithEthereum, isLoading } = useSiweAuth();
   const { isConnected } = useAccount();
 
   // Show loading state while connecting or authenticating

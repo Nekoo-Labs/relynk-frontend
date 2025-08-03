@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DashboardWelcomeCard } from "@/components/dashboard-welcome-card";
 import { DashboardUsernameSetup } from "@/components/dashboard-username-setup";
+import { PaymentLinksDashboard } from "@/components/dashboard/payment-links-dashboard";
 import { useAccount } from "wagmi";
 import { useProfileRegistry } from "@/hooks/use-profile-registry";
 import { useSearchParams } from "next/navigation";
@@ -21,7 +22,9 @@ import {
   Users,
   User,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
+import { Suspense } from "react";
 
 // Mock data for the dashboard
 const mockStats = {
@@ -31,45 +34,37 @@ const mockStats = {
   totalVolume: "$2,847",
 };
 
-const mockRecentLinks = [
-  {
-    id: 1,
-    title: "Premium Design Pack",
-    type: "Digital Product",
-    clicks: 45,
-    conversions: 12,
-    revenue: "$240",
-  },
-  {
-    id: 2,
-    title: "Notion Template Bundle",
-    type: "Digital Product",
-    clicks: 32,
-    conversions: 8,
-    revenue: "$160",
-  },
-  {
-    id: 3,
-    title: "Coffee Donation",
-    type: "Donation",
-    clicks: 18,
-    conversions: 15,
-    revenue: "$75",
-  },
-];
-
-export default function DashboardPage() {
+function DashboardContent() {
   const { address } = useAccount();
   const { useGetProfileByOwner } = useProfileRegistry();
   const searchParams = useSearchParams();
 
   // Get user's profile
-  const { data: profileResult } = useGetProfileByOwner(address!);
-  const [profile, username] = profileResult || [null, ''];
+  const { data: profileResult, isLoading: loadingProfile } =
+    useGetProfileByOwner(address!);
+  const [profile, username] = (profileResult as [any, string] | undefined) || [
+    null,
+    "",
+  ];
   const hasProfile = !!profile;
 
+  if (loadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary-background/30">
+        <Card className="w-full max-w-md mx-4 glow-soft">
+          <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main"></div>
+            <p className="text-foreground/60 text-center">
+              Checking your profile...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Check if user has skipped setup
-  const hasSkippedSetup = searchParams.get('skipSetup') === 'true';
+  const hasSkippedSetup = searchParams.get("skipSetup") === "true";
 
   // Show username setup page if user doesn't have profile and hasn't skipped
   if (!hasProfile && !hasSkippedSetup) {
@@ -114,7 +109,7 @@ export default function DashboardPage() {
             username={username}
             onSkip={() => {
               // User has already skipped, so just hide the card
-              window.history.replaceState({}, '', '/dashboard');
+              window.history.replaceState({}, "", "/dashboard");
             }}
           />
         )}
@@ -127,7 +122,10 @@ export default function DashboardPage() {
               Profile Active: @{username}
             </Badge>
             <Link href="/dashboard/profile">
-              <Badge variant="outline" className="hover:bg-secondary cursor-pointer">
+              <Badge
+                variant="outline"
+                className="hover:bg-secondary cursor-pointer"
+              >
                 Manage Profile
               </Badge>
             </Link>
@@ -201,49 +199,17 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Recent Links */}
-        <Card className="glow-hover">
-          <CardHeader>
-            <CardTitle>🔗 Recent Links ✨</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockRecentLinks.map((link, index) => (
-                <div
-                  key={link.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-base bg-secondary-background hover:shadow-lg hover:scale-[1.02] transition-all duration-300 glow-hover"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="flex-1">
-                    <h3 className="font-heading text-foreground">
-                      {link.title} 💕
-                    </h3>
-                    <p className="text-sm text-foreground/60">{link.type}</p>
-                  </div>
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="text-center">
-                      <p className="font-heading text-foreground">
-                        {link.clicks}
-                      </p>
-                      <p className="text-foreground/60">Clicks</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="font-heading text-foreground">
-                        {link.conversions}
-                      </p>
-                      <p className="text-foreground/60">Conversions</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="font-heading text-main">{link.revenue}</p>
-                      <p className="text-foreground/60">Revenue</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Payment Links Dashboard */}
+        <PaymentLinksDashboard />
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div>Loading dashboard...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }

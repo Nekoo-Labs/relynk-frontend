@@ -17,6 +17,14 @@ const buttonVariants = cva(
           "bg-secondary-background text-foreground border border-border shadow-shadow hover:shadow-md hover:bg-secondary-background/80 hover:scale-[1.01] transition-all duration-300",
         reverse:
           "text-main-foreground bg-main border border-border shadow-shadow hover:shadow-inner hover:brightness-90 transition-all duration-300",
+        outline:
+          "border border-border bg-transparent text-foreground hover:bg-secondary-background hover:text-foreground transition-all duration-300",
+        ghost:
+          "bg-transparent text-foreground hover:bg-secondary-background hover:text-foreground transition-all duration-300",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-destructive transition-all duration-300",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",

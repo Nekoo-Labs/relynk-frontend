@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { ProfileDisplay } from '@/components/profile-display';
 import { useProfileRegistry } from '@/hooks/use-profile-registry';
-import { ProfileData } from '@/types/profile';
+import { ProfileData, Profile } from '@/types/profile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
@@ -182,7 +182,11 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get profile data from contract
-  const { data: profile, isLoading: isLoadingProfile, error } = useGetProfile(username);
+  const { data: profile, isLoading: isLoadingProfile, error } = useGetProfile(username) as { 
+    data: Profile | undefined, 
+    isLoading: boolean, 
+    error: any 
+  };
 
   useEffect(() => {
     const loadProfileData = async () => {

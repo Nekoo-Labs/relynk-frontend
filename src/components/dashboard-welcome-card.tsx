@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { UsernameSetup } from '@/components/username-setup';
-import { Sparkles, SkipForward } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { UsernameSetup } from "@/components/username-setup";
+import { Sparkles, SkipForward } from "lucide-react";
 
 interface DashboardWelcomeCardProps {
   hasProfile: boolean;
@@ -12,7 +12,11 @@ interface DashboardWelcomeCardProps {
   onSkip?: () => void;
 }
 
-export function DashboardWelcomeCard({ hasProfile, username, onSkip }: DashboardWelcomeCardProps) {
+export function DashboardWelcomeCard({
+  hasProfile,
+  username,
+  onSkip,
+}: DashboardWelcomeCardProps) {
   const [showUsernameSetup, setShowUsernameSetup] = useState(false);
 
   // Don't show anything if user already has a profile
@@ -78,7 +82,7 @@ export function DashboardWelcomeCard({ hasProfile, username, onSkip }: Dashboard
             {onSkip && (
               <Button
                 onClick={handleSkipSetup}
-                variant="outline"
+                variant="noShadow"
                 size="sm"
                 className="w-full text-xs border-border text-foreground/60 hover:bg-secondary-background"
               >

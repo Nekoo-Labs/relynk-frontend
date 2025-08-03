@@ -15,25 +15,36 @@ export function useSiweAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [autoSignInAttempted, setAutoSignInAttempted] = useState(false);
   const signInRef = useRef<(() => Promise<void>) | null>(null);
+  const authInProgressRef = useRef(false);
 
-  const isAuthenticated = !!session?.address && session.address.toLowerCase() === address?.toLowerCase();
+  const isAuthenticated =
+    !!session?.address &&
+    session.address.toLowerCase() === address?.toLowerCase();
   const isConnecting = status === "loading";
 
   // Debug logging
-  useEffect(() => {
-    console.log("SIWE Auth State:", {
-      session,
-      status,
-      address,
-      isConnected,
-      isAuthenticated,
-      sessionAddress: session?.address,
-      autoSignInAttempted
-    });
-  }, [session, status, address, isConnected, isAuthenticated, autoSignInAttempted]);
+  // useEffect(() => {
+  //   console.log("🔍 SIWE Auth State:", {
+  //     session: !!session,
+  //     status,
+  //     address: address?.slice(0, 6) + "...",
+  //     isConnected,
+  //     isAuthenticated,
+  //     sessionAddress: session?.address?.slice(0, 6) + "...",
+  //     autoSignInAttempted,
+  //     isLoading
+  //   });
+  // }, [session, status, address, isConnected, isAuthenticated, autoSignInAttempted, isLoading]);
 
   const signInWithEthereum = useCallback(async () => {
     try {
+      // Prevent concurrent authentication attempts
+      if (authInProgressRef.current) {
+        console.log("🚫 Authentication already in progress, skipping...");
+        return;
+      }
+      
+      authInProgressRef.current = true;
       setIsLoading(true);
 
       if (!address || !isConnected) {
@@ -78,6 +89,7 @@ export function useSiweAuth() {
       throw error;
     } finally {
       setIsLoading(false);
+      authInProgressRef.current = false;
     }
   }, [address, isConnected, chainId, signMessageAsync]);
 
@@ -86,44 +98,84 @@ export function useSiweAuth() {
 
   // Auto-trigger SIWE authentication when wallet is connected but not authenticated
   useEffect(() => {
+    // Add more specific conditions to prevent recursive calls
     const shouldAutoSignIn =
       isConnected &&
       address &&
       !isAuthenticated &&
       !isLoading &&
       !autoSignInAttempted &&
-      status !== "loading";
+      !authInProgressRef.current && // Check if auth is already in progress
+      status === "unauthenticated" && // Only when explicitly unauthenticated
+      !session; // And no existing session
 
     if (shouldAutoSignIn && signInRef.current) {
-      console.log("Auto-triggering SIWE authentication...");
-      setAutoSignInAttempted(true);
-      signInRef.current().catch((error) => {
-        console.error("Auto SIWE sign-in failed:", error);
-        // Reset the flag so user can try again manually
-        setAutoSignInAttempted(false);
+      console.log("🚀 Auto-triggering SIWE authentication...", {
+        isConnected,
+        address: address?.slice(0, 6) + "...",
+        isAuthenticated,
+        status,
+        session: !!session,
+        authInProgress: authInProgressRef.current
       });
+      setAutoSignInAttempted(true);
+      
+      // Add a small delay to prevent rapid-fire attempts
+      setTimeout(() => {
+        if (!authInProgressRef.current) { // Double-check before proceeding
+          signInRef.current?.().catch((error) => {
+            console.error("Auto SIWE sign-in failed:", error);
+            // Reset the flag so user can try again manually
+            setAutoSignInAttempted(false);
+            authInProgressRef.current = false;
+          });
+        }
+      }, 100);
     }
-  }, [isConnected, address, isAuthenticated, isLoading, autoSignInAttempted, status]);
+  }, [
+    isConnected,
+    address,
+    isAuthenticated,
+    isLoading,
+    autoSignInAttempted,
+    status,
+    session, // Add session to dependencies
+  ]);
 
   // Reset auto sign-in flag when wallet disconnects or address changes
   useEffect(() => {
     if (!isConnected || !address) {
       setAutoSignInAttempted(false);
+      authInProgressRef.current = false; // Reset auth progress when disconnected
     }
   }, [isConnected, address]);
 
+  // Reset auto sign-in flag when session becomes authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      setAutoSignInAttempted(false);
+      authInProgressRef.current = false; // Reset auth progress when authenticated
+    }
+  }, [isAuthenticated]);
+
   // Handle session/address mismatch
   useEffect(() => {
-    if (session?.address && address && session.address.toLowerCase() !== address.toLowerCase()) {
+    if (
+      session?.address &&
+      address &&
+      isConnected && // Only handle mismatch when wallet is connected
+      session.address.toLowerCase() !== address.toLowerCase() &&
+      !isLoading // Don't interfere during authentication
+    ) {
       console.log("Session address mismatch, signing out...", {
         sessionAddress: session.address,
-        walletAddress: address
+        walletAddress: address,
       });
       // Sign out the old session
       signOut({ redirect: false });
       setAutoSignInAttempted(false);
     }
-  }, [session?.address, address]);
+  }, [session?.address, address, isConnected, isLoading]);
 
   const logout = async () => {
     // Sign out from NextAuth session
@@ -152,14 +204,17 @@ export function useSiweAuth() {
 
 export function useRequireSiweAuth() {
   const { isAuthenticated, isConnecting } = useSiweAuth();
-  
+
   // Don't redirect here - let the auth guard handle the authentication flow
   // The auth guard will show the sign-in UI instead of redirecting
-  
+
   return { isAuthenticated, isConnecting };
 }
 
 // Helper function to generate a random nonce
 function generateNonce(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  return (
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
+  );
 }
