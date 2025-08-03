@@ -1,4 +1,4 @@
-# 🔗 Paylynk
+# 🔗 Relynk
 
 **Tagline:** _"Create. Share. Get Paid. All Onchain."_
 
@@ -6,31 +6,36 @@ A Web3-native monetization platform that empowers creators, freelancers, and dig
 
 ## 🎯 Overview
 
-Paylynk brings the simplicity of traditional payment link services like Gumroad or Mayar.id, but powered by **crypto, smart contracts, and self-custody**. It's designed to be the bridge between Web2 UX and Web3 infrastructure.
+Relynk brings the simplicity of traditional payment link services like Gumroad or Mayar.id, but powered by **crypto, smart contracts, and self-custody**. It's designed to be the bridge between Web2 UX and Web3 infrastructure.
 
 ## ✨ Core Features
 
 ### 🔗 Onchain Payment Links
+
 - Generate smart contract-backed links for crypto payments
 - Support for stablecoins (USDC, IDRX, etc.)
 - Fixed price, dynamic price, or donation-based options
 
 ### 📁 Digital Product Sales
+
 - Upload files to IPFS for decentralized storage
 - Automatic delivery after payment confirmation
 - Support for eBooks, templates, design packs, and more
 
 ### 🎟️ Token-Gated Access
+
 - Grant access to exclusive content after payment
 - SBT/NFT-based proof of purchase
 - Unlock private links, files, or pages
 
 ### 🧾 Custom Checkout Pages
+
 - Personalized checkout experience per product
 - Integrated wallet connection
 - Clean, conversion-optimized design
 
 ### 🪪 User-Friendly Authentication
+
 - Wallet-based authentication with SIWE (Sign-In with Ethereum)
 - Social login options via NextAuth
 - EVM wallet support
@@ -49,19 +54,21 @@ Paylynk brings the simplicity of traditional payment link services like Gumroad 
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm, yarn, pnpm, or bun
 - A Web3 wallet (MetaMask, WalletConnect, etc.)
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd lynk-web3
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or
@@ -71,17 +78,20 @@ Paylynk brings the simplicity of traditional payment link services like Gumroad 
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
-   
+
    Configure the following variables:
+
    ```env
    NEXTAUTH_SECRET=your-secret-here
    NEXTAUTH_URL=http://localhost:3000
    ```
 
 4. **Run the development server**
+
    ```bash
    npm run dev
    # or
@@ -96,12 +106,14 @@ Paylynk brings the simplicity of traditional payment link services like Gumroad 
 ## 📱 Application Structure
 
 ### Homepage (`/`)
+
 - Hero section with value proposition
 - Feature showcase
 - How it works explanation
 - Social proof and testimonials
 
 ### Dashboard (`/dashboard`)
+
 Protected area requiring wallet authentication:
 
 - **Overview** (`/dashboard`) - Main dashboard with key metrics
@@ -121,6 +133,7 @@ Protected area requiring wallet authentication:
 ## 🎨 Design System
 
 The application features a **neo-brutalist rose theme** with:
+
 - Light mode optimized interface
 - Bold, high-contrast design elements
 - Pink accent colors with modern typography

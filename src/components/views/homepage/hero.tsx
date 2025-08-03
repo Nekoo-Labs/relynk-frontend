@@ -98,7 +98,7 @@ export default function HeroSection() {
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              Paylynk
+              Relynk
             </motion.span>{" "}
             is a Web3-native monetization tool for creators, freelancers, and
             digital hustlers.
@@ -156,7 +156,7 @@ export default function HeroSection() {
                         className="text-xs text-gray-500 p-2 bg-gray-100/50 rounded-md block w-full"
                         whileHover={{ backgroundColor: "rgb(243 244 246)" }}
                       >
-                        paylynk.app/template123
+                        relynk.app/template123
                       </motion.code>
                     </div>
                   </div>
@@ -195,7 +195,7 @@ export default function HeroSection() {
                         Tip: Any amount
                       </p>
                       <code className="text-xs text-gray-500 p-3 bg-gray-100/50 rounded-md block">
-                        paylynk.app/tip456
+                        relynk.app/tip456
                       </code>
                     </div>
                   </div>
@@ -233,7 +233,7 @@ export default function HeroSection() {
                         Tip: Any amount
                       </p>
                       <code className="text-xs text-gray-500 p-3 bg-gray-100/50 rounded-md block">
-                        paylynk.app/tip456
+                        relynk.app/tip456
                       </code>
                     </div>
                   </div>
@@ -255,9 +255,9 @@ export default function HeroSection() {
           variants={fadeInUp}
         >
           <motion.div {...scaleOnHover}>
-            <Button 
+            <Button
               className="bg-main text-white hover:bg-main/90 text-lg px-10 py-5 shadow-xl"
-              onClick={() => window.location.href = '/dashboard/links/create'}
+              onClick={() => (window.location.href = "/dashboard/links/create")}
             >
               <motion.span
                 animate={{ x: [0, 5, 0] }}
@@ -271,7 +271,7 @@ export default function HeroSection() {
             <Button
               variant="neutral"
               className="text-lg px-10 py-5 border-2 border-main/20 shadow-main/20! shadow-sm"
-              onClick={() => window.location.href = '/dashboard'}
+              onClick={() => (window.location.href = "/dashboard")}
             >
               View Dashboard
             </Button>

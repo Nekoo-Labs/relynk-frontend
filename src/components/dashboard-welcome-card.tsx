@@ -61,13 +61,13 @@ export function DashboardWelcomeCard({
             </div>
             <div>
               <h3 className="font-heading text-lg text-foreground">
-                💖 Welcome to Paylynk!
+                💖 Welcome to Relynk!
               </h3>
               <p className="text-foreground/60 text-sm mt-1">
                 Set up your username to create your personalized profile~ ✨
               </p>
               <p className="text-main text-xs mt-2 font-medium">
-                paylynk.app/your-username
+                relynk.app/your-username
               </p>
             </div>
           </div>

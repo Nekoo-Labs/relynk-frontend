@@ -49,7 +49,7 @@ export function SiweAuthGuard({ children }: SiweAuthGuardProps) {
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-6">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-heading text-foreground">
-                💖 Welcome to Paylynk!
+                💖 Welcome to Relynk!
               </h2>
               <p className="text-foreground/60">
                 {!isConnected
