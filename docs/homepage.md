@@ -1,4 +1,4 @@
-# 🔗 Paylynk
+# 🔗 Relynk
 
 **Turn Any Web3 Action Into a Link**
 

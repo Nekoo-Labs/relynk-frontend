@@ -1,20 +1,20 @@
+import { pinata } from "@/lib/pinata";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
   try {
-    // This is a placeholder upload endpoint
-    // In a real implementation, you would handle file uploads here
-    const body = await request.json();
-    
-    return NextResponse.json({
-      success: true,
-      message: "Upload endpoint placeholder",
-      data: body
+    // Generate a signed upload URL with 30 second expiry
+    const url = await pinata.upload.public.createSignedURL({
+      expires: 30,
     });
+
+    return NextResponse.json({ url }, { status: 200 });
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error("Error creating signed upload URL:", error);
     return NextResponse.json(
-      { success: false, error: "Upload failed" },
+      { error: "Failed to create upload URL" },
       { status: 500 }
     );
   }

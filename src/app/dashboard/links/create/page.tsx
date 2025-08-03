@@ -13,7 +13,6 @@ export default function CreateLinkPage() {
 
   const handleSuccess = (linkId: string) => {
     toast.success("Payment link created successfully! 🎉", {
-      description: `Link ID: ${linkId}`,
       duration: 5000,
     });
     // router.push(`/dashboard/links?created=${linkId}`);

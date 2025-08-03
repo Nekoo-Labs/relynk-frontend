@@ -25,17 +25,17 @@ import { useBalance } from "wagmi";
 // Supported tokens for Relynk payment processing
 export const SUPPORTED_TOKENS: SupportedToken[] = [
   {
-    address: "0x0000000000000000000000000000000000000000" as Address,
-    symbol: "ETH",
-    name: "Ethereum",
-    decimals: 18,
-    isNative: true,
-    chainId: 1, // Ethereum mainnet
-  },
-  {
     address: "0xA0b86a33E6441E6C5C7C8E0C3C8C8C8C8C8C8C8C" as Address,
     symbol: "USDC",
     name: "USD Coin (Mock)",
+    decimals: 6,
+    isNative: false,
+    chainId: 1, // Ethereum mainnet
+  },
+  {
+    address: "0xB0b86a33E6441E6C5C7C8E0C3C8C8C8C8C8C8C8C" as Address,
+    symbol: "USDT",
+    name: "Tether USD (Mock)",
     decimals: 6,
     isNative: false,
     chainId: 1, // Ethereum mainnet

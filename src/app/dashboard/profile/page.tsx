@@ -1,78 +1,55 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
-import { DashboardLayout } from '@/components/dashboard-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ProfileCreationForm } from '@/components/profile-creation-form';
-import { UsernameSetup } from '@/components/username-setup';
-import { useProfileRegistry } from '@/hooks/use-profile-registry';
-import { ProfileData } from '@/types/profile';
-import { User, ExternalLink, Edit, Plus, Eye } from 'lucide-react';
-import Link from 'next/link';
+import { useState } from "react";
+import { useAccount } from "wagmi";
+import { DashboardLayout } from "@/components/dashboard-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ProfileCreationForm } from "@/components/profile-creation-form";
+import { UsernameSetup } from "@/components/username-setup";
+import { useCurrentUserProfile } from "@/hooks/use-profile-data";
+import { usePaymentLinks } from "@/hooks/use-payment-links";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { useStableLoading } from "@/hooks/use-stable-loading";
+import {
+  User,
+  ExternalLink,
+  Edit,
+  Plus,
+  Eye,
+  TrendingUp,
+  DollarSign,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function ProfilePage() {
-  const { address } = useAccount();
-  const { useGetProfileByOwner } = useProfileRegistry();
+  const { address, isConnecting } = useAccount();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
 
-  // Get user's profile
-  const { data: profileResult, isLoading, error } = useGetProfileByOwner(address!);
-  const [profile, username] = (profileResult as [any, string] | undefined) || [null, ''];
+  // Get user's profile data using React Query
+  const {
+    profile,
+    username,
+    profileData,
+    isLoading: isLoadingProfile,
+    error,
+  } = useCurrentUserProfile();
 
-  // Mock function to fetch profile data from IPFS
-  const fetchProfileData = async (ipfsHash: string): Promise<ProfileData> => {
-    // In a real implementation, you would fetch from IPFS
-    // For now, return mock data
-    return {
-      name: 'John Doe',
-      bio: 'Web3 developer and crypto enthusiast',
-      links: [
-        {
-          id: '1',
-          title: 'My Website',
-          url: 'https://johndoe.com',
-          description: 'Check out my portfolio',
-          icon: '',
-          isActive: true,
-          order: 0,
-          type: 'link',
-        },
-        {
-          id: '2',
-          title: 'Buy Me Coffee',
-          url: '/pay/coffee-donation',
-          description: 'Support my work',
-          icon: '',
-          isActive: true,
-          order: 1,
-          type: 'donation',
-        },
-      ],
-      theme: {
-        backgroundColor: '#ffffff',
-        textColor: '#000000',
-        accentColor: '#3b82f6',
-        buttonStyle: 'rounded',
-        backgroundType: 'solid',
-      },
-      socialLinks: {
-        twitter: 'https://twitter.com/johndoe',
-        github: 'https://github.com/johndoe',
-      },
-    };
-  };
+  // Get payment links data
+  const { data: paymentLinks = [], isLoading: isLoadingLinks } =
+    usePaymentLinks(address!);
 
-  useEffect(() => {
-    if (profile?.ipfsHash) {
-      fetchProfileData(profile.ipfsHash).then(setProfileData);
-    }
-  }, [profile]);
+  // Get analytics data
+  const { stats: analyticsData, isLoading: isLoadingAnalytics } =
+    useAnalytics();
 
-  if (isLoading) {
+  // Use stable loading to prevent flashing
+  const stableLoading = useStableLoading(isConnecting || isLoadingProfile, 500);
+
+  // Show loading state while connecting wallet or loading profile
+  // Add a small delay to prevent flashing during quick state transitions
+  if (stableLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -85,8 +62,8 @@ export default function ProfilePage() {
     );
   }
 
-  // Show username setup if no profile exists
-  if (!profile) {
+  // Show username setup if no profile exists (only after loading is complete and we have an address)
+  if (!username && !profile && address) {
     return <UsernameSetup />;
   }
 
@@ -104,18 +81,12 @@ export default function ProfilePage() {
                 Update your profile information and links
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateForm(false)}
-            >
+            <Button variant="outline" onClick={() => setShowCreateForm(false)}>
               Cancel
             </Button>
           </div>
 
-          <ProfileCreationForm
-            existingUsername={username}
-            isEditing={true}
-          />
+          <ProfileCreationForm existingUsername={username} isEditing={true} />
         </div>
       </DashboardLayout>
     );
@@ -141,7 +112,7 @@ export default function ProfilePage() {
                 View Profile
               </Button>
             </Link>
-            <Button 
+            <Button
               onClick={() => setShowCreateForm(true)}
               className="flex items-center gap-2"
             >
@@ -163,24 +134,34 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground/60">Username</label>
+                <label className="text-sm font-medium text-foreground/60">
+                  Username
+                </label>
                 <p className="font-medium">@{username}</p>
               </div>
-              
+
               {profileData && (
                 <>
                   <div>
-                    <label className="text-sm font-medium text-foreground/60">Display Name</label>
+                    <label className="text-sm font-medium text-foreground/60">
+                      Display Name
+                    </label>
                     <p className="font-medium">{profileData.name}</p>
                   </div>
-                  
+
                   <div>
-                    <label className="text-sm font-medium text-foreground/60">Bio</label>
-                    <p className="text-sm">{profileData.bio || 'No bio added'}</p>
+                    <label className="text-sm font-medium text-foreground/60">
+                      Bio
+                    </label>
+                    <p className="text-sm">
+                      {profileData.bio || "No bio added"}
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <label className="text-sm font-medium text-foreground/60">Profile URL</label>
+                    <label className="text-sm font-medium text-foreground/60">
+                      Profile URL
+                    </label>
                     <div className="flex items-center gap-2">
                       <code className="text-sm bg-secondary px-2 py-1 rounded">
                         /{username}
@@ -200,25 +181,52 @@ export default function ProfilePage() {
           {/* Profile Stats */}
           <Card>
             <CardHeader>
-              <CardTitle>📊 Profile Stats</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Profile Stats
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-secondary rounded-base">
                   <p className="text-2xl font-bold text-main">
-                    {profileData?.links.filter(l => l.isActive).length || 0}
+                    {paymentLinks.filter((l) => l.isActive).length || 0}
                   </p>
                   <p className="text-sm text-foreground/60">Active Links</p>
                 </div>
                 <div className="text-center p-3 bg-secondary rounded-base">
-                  <p className="text-2xl font-bold text-main">0</p>
+                  <p className="text-2xl font-bold text-main">
+                    {analyticsData?.totalClicks || 0}
+                  </p>
                   <p className="text-sm text-foreground/60">Total Clicks</p>
                 </div>
               </div>
-              
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-secondary rounded-base">
+                  <p className="text-2xl font-bold text-main">
+                    {analyticsData?.totalViews || 0}
+                  </p>
+                  <p className="text-sm text-foreground/60">Total Views</p>
+                </div>
+                <div className="text-center p-3 bg-secondary rounded-base">
+                  <div className="flex items-center justify-center gap-1">
+                    <DollarSign className="w-4 h-4 text-main" />
+                    <p className="text-2xl font-bold text-main">
+                      {analyticsData?.totalVolumeUSD || "0.00"}
+                    </p>
+                  </div>
+                  <p className="text-sm text-foreground/60">Total Revenue</p>
+                </div>
+              </div>
+
               <div className="text-center p-3 bg-secondary rounded-base">
                 <p className="text-2xl font-bold text-main">
-                  {profile ? new Date(Number(profile.createdAt) * 1000).toLocaleDateString() : 'N/A'}
+                  {profile
+                    ? new Date(
+                        Number(profile.createdAt) * 1000
+                      ).toLocaleDateString()
+                    : "N/A"}
                 </p>
                 <p className="text-sm text-foreground/60">Profile Created</p>
               </div>
@@ -226,60 +234,95 @@ export default function ProfilePage() {
           </Card>
         </div>
 
-        {/* Links Management */}
+        {/* Payment Links Management */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
-                🔗 Your Links
+                🔗 Your Payment Links
               </span>
-              <Button 
-                onClick={() => setShowCreateForm(true)}
-                size="sm"
-                variant="outline"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Link
-              </Button>
+              <Link href="/dashboard/links">
+                <Button size="sm" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Link
+                </Button>
+              </Link>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {profileData?.links && profileData.links.length > 0 ? (
+            {isLoadingLinks ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-main border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : paymentLinks && paymentLinks.length > 0 ? (
               <div className="space-y-3">
-                {profileData.links
-                  .sort((a, b) => a.order - b.order)
+                {paymentLinks
+                  .slice(0, 5) // Show only first 5 links
                   .map((link) => (
                     <div
                       key={link.id}
                       className="flex items-center justify-between p-4 border border-border rounded-base bg-secondary-background"
                     >
                       <div className="flex items-center gap-3">
-                        <Badge variant={link.isActive ? "default" : "secondary"}>
-                          {link.type}
+                        <Badge
+                          variant={link.isActive ? "default" : "secondary"}
+                        >
+                          {link.linkType === 0
+                            ? "Donation"
+                            : link.linkType === 1
+                            ? "Service"
+                            : link.linkType === 2
+                            ? "Product"
+                            : "Content"}
                         </Badge>
                         <div>
                           <h4 className="font-medium">{link.title}</h4>
-                          <p className="text-sm text-foreground/60 truncate max-w-xs">
-                            {link.url}
+                          <p className="text-sm text-foreground/60">
+                            {link.formattedAmount}
+                          </p>
+                          <p className="text-xs text-foreground/40">
+                            {link.clicks || 0} clicks • {link.views || 0} views
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
-                        <Badge variant={link.isActive ? "default" : "secondary"}>
-                          {link.isActive ? 'Active' : 'Inactive'}
+                        <Badge
+                          variant={link.isActive ? "default" : "secondary"}
+                        >
+                          {link.isActive ? "Active" : "Expired"}
                         </Badge>
-                        <Button variant="outline" size="sm">
-                          <Edit className="w-3 h-3" />
-                        </Button>
+                        <Link href={`/dashboard/links`}>
+                          <Button variant="outline" size="sm">
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   ))}
+
+                {paymentLinks.length > 5 && (
+                  <div className="text-center pt-4">
+                    <Link href="/dashboard/links">
+                      <Button variant="outline" size="sm">
+                        View All {paymentLinks.length} Links
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8 text-foreground/60">
-                <p>No links added yet</p>
-                <p className="text-sm mt-1">Add your first link to get started!</p>
+                <p>No payment links created yet</p>
+                <p className="text-sm mt-1">
+                  Create your first payment link to get started!
+                </p>
+                <Link href="/dashboard/links">
+                  <Button className="mt-4">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Link
+                  </Button>
+                </Link>
               </div>
             )}
           </CardContent>

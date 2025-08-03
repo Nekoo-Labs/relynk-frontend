@@ -15,8 +15,12 @@ import {
   PaymentResult,
   CreateLinkFormData,
   PaymentLink,
+  LinkMetadata,
 } from "@/types/relynk";
 import { getContractConfig, SUPPORTED_TOKENS } from "@/lib/contracts";
+
+// Create array version for easier iteration
+const SUPPORTED_TOKENS_ARRAY = Object.values(SUPPORTED_TOKENS);
 
 export function useRelynkProcessor() {
   const { address } = useAccount();
@@ -234,7 +238,7 @@ export function useRelynkProcessor() {
   ): Promise<PaymentLink> => {
     // Get token decimals for proper formatting
     const getTokenDecimals = (symbol: string): number => {
-      const token = Object.values(SUPPORTED_TOKENS).find(
+      const token = SUPPORTED_TOKENS_ARRAY.find(
         (t) => t.symbol === symbol
       );
       return token?.decimals || 18; // Default to 18 decimals
@@ -246,8 +250,8 @@ export function useRelynkProcessor() {
     ).toString();
 
     // Handle metadata - could be IPFS hash or fallback JSON string
-    let metadata: any;
-    let fullMetadata: any = null;
+    let metadata: Record<string, unknown>;
+    let fullMetadata: Record<string, unknown> | null = null;
 
     try {
       const { UnifiedIPFSService } = await import("@/lib/unified-ipfs-service");
@@ -261,15 +265,15 @@ export function useRelynkProcessor() {
         try {
           fullMetadata = await UnifiedIPFSService.retrieveMetadata(
             linkData.metadata
-          );
+          ) as unknown as Record<string, unknown>;
           metadata = {
-            title: fullMetadata.title,
-            description: fullMetadata.description,
+            title: fullMetadata?.title,
+            description: fullMetadata?.description,
             // Extract basic fields for backward compatibility
-            redirectUrl: fullMetadata.redirectUrl,
-            successMessage: fullMetadata.successMessage,
-            tags: fullMetadata.tags || [],
-            category: fullMetadata.category,
+            redirectUrl: fullMetadata?.redirectUrl,
+            successMessage: fullMetadata?.successMessage,
+            tags: fullMetadata?.tags || [],
+            category: fullMetadata?.category,
           };
         } catch (ipfsError) {
           console.warn(
@@ -292,8 +296,8 @@ export function useRelynkProcessor() {
 
     return {
       id: linkData.linkId,
-      title: metadata.title || "Unknown Link",
-      description: metadata.description || "",
+      title: (metadata.title as string) || "Unknown Link",
+      description: (metadata.description as string) || "",
       creator: linkData.creator,
       linkType: linkData.linkType,
       amountType: linkData.amountType,
@@ -304,9 +308,9 @@ export function useRelynkProcessor() {
       expires: new Date(Number(linkData.expires) * 1000),
       isActive: Number(linkData.expires) * 1000 > Date.now(),
       isUsed: false, // This should be determined by contract state
-      createdAt: new Date(fullMetadata?.createdAt || Date.now()),
-      updatedAt: new Date(fullMetadata?.updatedAt || Date.now()),
-      metadata: fullMetadata || metadata, // Use full metadata if available
+      createdAt: new Date((fullMetadata?.createdAt as number) || Date.now()),
+      updatedAt: new Date((fullMetadata?.updatedAt as number) || Date.now()),
+      metadata: (fullMetadata || metadata) as unknown as LinkMetadata, // Use full metadata if available
       ipfsHash: linkData.metadata, // Store the IPFS hash
       signature, // Creator's signature for link validation
       originalLinkData: linkData, // Original linkData that was signed
@@ -314,7 +318,7 @@ export function useRelynkProcessor() {
       formattedAmount: `${formattedAmount} ${tokenSymbol}`,
       shortId: linkData.linkId.slice(0, 8),
       previewImage:
-        fullMetadata?.images?.[0] || fullMetadata?.previewContent?.images?.[0],
+        (fullMetadata as any)?.images?.[0] || (fullMetadata as any)?.previewContent?.images?.[0],
     };
   };
 

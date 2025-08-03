@@ -120,7 +120,7 @@ export function UsernameSetup({
               <Sparkles className="w-8 h-8 text-main" />
             </div>
             <h1 className="text-2xl font-heading text-foreground">
-              💖 Welcome to Paylynk!
+              💖 Welcome to Relynk!
             </h1>
             <p className="text-foreground/60 leading-relaxed">
               To get started, you&apos;ll need to set up your username.
@@ -139,7 +139,7 @@ export function UsernameSetup({
               {/* URL Preview */}
               <div className="flex items-center bg-secondary-background border border-border rounded-base p-3">
                 <span className="text-main font-medium bg-main/10 px-2 py-1 rounded text-sm">
-                  paylynk.app/
+                  relynk.app/
                 </span>
                 <Input
                   placeholder="your-username"

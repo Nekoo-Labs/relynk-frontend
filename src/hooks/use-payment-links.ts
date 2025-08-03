@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
-import { PaymentLink } from "@/types/relynk";
+import { PaymentLink, LinkData, LinkMetadata } from "@/types/relynk";
 import { UnifiedIPFSService } from "@/lib/unified-ipfs-service";
 import { toast } from "sonner";
 import { Address } from "viem";
@@ -74,9 +74,9 @@ export function useCreatePaymentLink() {
       signature,
       metadata,
     }: {
-      linkData: any;
+      linkData: LinkData;
       signature: `0x${string}`;
-      metadata: any;
+      metadata: LinkMetadata;
     }): Promise<{ ipfsHash: string; paymentLink: PaymentLink }> => {
       return await UnifiedIPFSService.storePaymentLink(
         linkData,
@@ -116,9 +116,9 @@ export function useUpdatePaymentLink() {
       signature,
       metadata,
     }: {
-      linkData: any;
+      linkData: LinkData;
       signature: `0x${string}`;
-      metadata: any;
+      metadata: LinkMetadata;
     }): Promise<{ ipfsHash: string; paymentLink: PaymentLink }> => {
       if (!address) {
         throw new Error("Wallet not connected");

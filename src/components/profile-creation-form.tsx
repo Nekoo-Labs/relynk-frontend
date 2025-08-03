@@ -63,7 +63,7 @@ export function ProfileCreationForm({ existingUsername, isEditing = false }: Pro
     }
   }, [isSuccess, formData.username, router]);
 
-  const handleInputChange = (field: keyof ProfileFormData, value: any) => {
+  const handleInputChange = (field: keyof ProfileFormData, value: string | Omit<ProfileLink, 'id'>[] | SocialLinks | ProfileTheme) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -80,7 +80,7 @@ export function ProfileCreationForm({ existingUsername, isEditing = false }: Pro
     handleInputChange('links', [...formData.links, newLink]);
   };
 
-  const updateLink = (index: number, field: keyof Omit<ProfileLink, 'id'>, value: any) => {
+  const updateLink = (index: number, field: keyof Omit<ProfileLink, 'id'>, value: string | number | boolean) => {
     const updatedLinks = [...formData.links];
     updatedLinks[index] = { ...updatedLinks[index], [field]: value };
     handleInputChange('links', updatedLinks);

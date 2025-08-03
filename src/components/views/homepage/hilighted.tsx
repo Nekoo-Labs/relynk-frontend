@@ -123,7 +123,7 @@ export default function HilightedSection() {
           </motion.div>
         </motion.div>
 
-        {/* Why Paylynk Section - Simplified */}
+        {/* Why Relynk Section - Simplified */}
         <motion.div
           className="mb-20"
           initial="initial"
@@ -137,7 +137,7 @@ export default function HilightedSection() {
               whileInView={{ scale: [0.9, 1] }}
               transition={{ duration: 0.5 }}
             >
-              Why Paylynk?
+              Why Relynk?
             </motion.h2>
           </motion.div>
 
@@ -218,7 +218,7 @@ export default function HilightedSection() {
               variants={fadeInUp}
             >
               Join thousands of creators who are already monetizing their
-              content with Paylynk. Create your first payment link in minutes.
+              content with Relynk. Create your first payment link in minutes.
             </motion.p>
             <motion.div
               className="flex items-center gap-6 justify-center flex-wrap"
@@ -241,9 +241,10 @@ export default function HilightedSection() {
                   variant="neutral"
                   className="text-xl px-12 py-6 border-2 border-main/20 shadow-main"
                   onClick={() => {
-                    const howItWorksSection = document.querySelector('#how-it-works');
+                    const howItWorksSection =
+                      document.querySelector("#how-it-works");
                     if (howItWorksSection) {
-                      howItWorksSection.scrollIntoView({ behavior: 'smooth' });
+                      howItWorksSection.scrollIntoView({ behavior: "smooth" });
                     }
                   }}
                 >

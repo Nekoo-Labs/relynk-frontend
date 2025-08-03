@@ -43,7 +43,7 @@ export function useSiweAuth() {
         console.log("🚫 Authentication already in progress, skipping...");
         return;
       }
-      
+
       authInProgressRef.current = true;
       setIsLoading(true);
 
@@ -55,7 +55,7 @@ export function useSiweAuth() {
       const message = new SiweMessage({
         domain: window.location.host,
         address: address,
-        statement: "Sign in with Ethereum to Paylynk",
+        statement: "Sign in with Ethereum to Relynk",
         uri: window.location.origin,
         version: "1",
         chainId: chainId || 1,
@@ -116,13 +116,14 @@ export function useSiweAuth() {
         isAuthenticated,
         status,
         session: !!session,
-        authInProgress: authInProgressRef.current
+        authInProgress: authInProgressRef.current,
       });
       setAutoSignInAttempted(true);
-      
+
       // Add a small delay to prevent rapid-fire attempts
       setTimeout(() => {
-        if (!authInProgressRef.current) { // Double-check before proceeding
+        if (!authInProgressRef.current) {
+          // Double-check before proceeding
           signInRef.current?.().catch((error) => {
             console.error("Auto SIWE sign-in failed:", error);
             // Reset the flag so user can try again manually

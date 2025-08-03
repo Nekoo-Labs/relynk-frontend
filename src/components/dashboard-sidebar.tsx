@@ -70,7 +70,7 @@ export function DashboardSidebar() {
             💰
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-heading">Paylynk</span>
+            <span className="text-sm font-heading">Relynk</span>
             <span className="text-xs text-foreground/60">Dashboard</span>
           </div>
         </div>

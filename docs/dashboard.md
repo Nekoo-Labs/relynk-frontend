@@ -1,4 +1,4 @@
-# 🌹 Paylynk UI Slicing Guideline – Neo-brutalist Rose Theme (Light Mode)
+# 🌹 Relynk UI Slicing Guideline – Neo-brutalist Rose Theme (Light Mode)
 
 All MVP features and pages live under the `/dashboard` route and follow a **neo-brutalist light pink aesthetic**.
 
@@ -38,7 +38,7 @@ for dashboard component utilize the sidebar component already available at compo
 
 ### 3. `/dashboard/links`
 
-> CRUD for all Paylynk links
+> CRUD for all Relynk links
 
 **Components:**
 

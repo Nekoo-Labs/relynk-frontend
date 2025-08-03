@@ -395,12 +395,7 @@ export function PaymentLinksDashboard({
               <div>
                 <p className="text-sm font-medium">Total Earnings</p>
                 <p className="text-2xl font-bold">
-                  {formatEther(
-                    stats.totalEarnings[
-                      "0x0000000000000000000000000000000000000000"
-                    ] || BigInt(0)
-                  )}{" "}
-                  ETH
+                  ${stats.totalVolumeUSD || "0.00"} USD
                 </p>
               </div>
             </div>

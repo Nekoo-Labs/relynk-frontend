@@ -13,18 +13,22 @@ interface SiweAuthGuardProps {
 
 export function SiweAuthGuard({ children }: SiweAuthGuardProps) {
   // Use only one hook instance to prevent conflicts
-  const { isAuthenticated, isConnecting, signInWithEthereum, isLoading } = useSiweAuth();
+  const { isAuthenticated, isConnecting, signInWithEthereum, isLoading } =
+    useSiweAuth();
   const { isConnected } = useAccount();
 
   // Show loading state while connecting or authenticating
-  if (isConnecting || isLoading) {
+  // But only show loading if we're actually in a loading state, not just briefly transitioning
+  if ((isConnecting || isLoading) && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary-background/30">
         <Card className="w-full max-w-md mx-4 glow-soft">
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main"></div>
             <p className="text-foreground/60 text-center">
-              {isLoading ? "🔐 Authenticating with your wallet..." : "🔗 Connecting to wallet..."}
+              {isLoading
+                ? "🔐 Authenticating with your wallet..."
+                : "🔗 Connecting to wallet..."}
             </p>
             {isLoading && (
               <p className="text-sm text-foreground/40 text-center">
@@ -37,21 +41,20 @@ export function SiweAuthGuard({ children }: SiweAuthGuardProps) {
     );
   }
 
-  // Show authentication prompt if not authenticated
-  if (!isAuthenticated) {
+  // Show authentication prompt if not authenticated and not in a loading state
+  if (!isAuthenticated && !isConnecting && !isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary-background/30">
         <Card className="w-full max-w-md mx-4 glow-soft shimmer">
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-6">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-heading text-foreground">
-                💖 Welcome to Paylynk!
+                💖 Welcome to Relynk!
               </h2>
               <p className="text-foreground/60">
                 {!isConnected
                   ? "Please connect your wallet to access the dashboard~ ✨"
-                  : "Authentication in progress... If this takes too long, click below to sign manually~ ✨"
-                }
+                  : "Authentication in progress... If this takes too long, click below to sign manually~ ✨"}
               </p>
             </div>
 
@@ -74,7 +77,8 @@ export function SiweAuthGuard({ children }: SiweAuthGuardProps) {
                   )}
                 </Button>
                 <p className="text-xs text-foreground/50 text-center">
-                  Authentication should happen automatically when you connect your wallet
+                  Authentication should happen automatically when you connect
+                  your wallet
                 </p>
               </div>
             )}

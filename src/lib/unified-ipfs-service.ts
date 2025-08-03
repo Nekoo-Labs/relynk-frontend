@@ -9,6 +9,9 @@ import { Address } from "viem";
 import { api } from "@/services/api";
 import { SUPPORTED_TOKENS } from "./contracts";
 
+// Create array version for easier iteration
+const SUPPORTED_TOKENS_ARRAY = Object.values(SUPPORTED_TOKENS);
+
 /**
  * Unified IPFS Service for Relynk
  * Combines payment link storage and metadata services
@@ -20,7 +23,7 @@ export class UnifiedIPFSService {
   /**
    * Helper function to serialize objects with BigInt values
    */
-  private static serializeWithBigInt(obj: any): string {
+  private static serializeWithBigInt(obj: unknown): string {
     return JSON.stringify(obj, (key, value) => {
       if (typeof value === "bigint") {
         return value.toString();
@@ -35,11 +38,11 @@ export class UnifiedIPFSService {
   private static deserializeWithBigInt(
     jsonString: string,
     bigIntFields: string[] = []
-  ): any {
+  ): unknown {
     const obj = JSON.parse(jsonString);
 
     // Recursively restore BigInt fields
-    const restoreBigInts = (target: any, path: string[] = []): any => {
+    const restoreBigInts = (target: Record<string, unknown>, path: string[] = []): Record<string, unknown> => {
       if (typeof target === "object" && target !== null) {
         for (const [key, value] of Object.entries(target)) {
           const currentPath = [...path, key];
@@ -47,8 +50,8 @@ export class UnifiedIPFSService {
 
           if (bigIntFields.includes(fieldPath) && typeof value === "string") {
             target[key] = BigInt(value);
-          } else if (typeof value === "object") {
-            restoreBigInts(value, currentPath);
+          } else if (typeof value === "object" && value !== null) {
+            restoreBigInts(value as Record<string, unknown>, currentPath);
           }
         }
       }
@@ -94,7 +97,7 @@ export class UnifiedIPFSService {
         type: "application/json",
       });
 
-      // Upload with keyvalues metadata for tracking
+      // Upload using Pinata SDK with signed URL (safe for client-side)
       const upload = await pinata.upload.public
         .file(file)
         .keyvalues({
@@ -147,7 +150,7 @@ export class UnifiedIPFSService {
   ): Promise<PaymentLink[]> {
     try {
       // Use Pinata's file listing with keyvalues filter
-      const files = await api.get(`/api/v1/payment-links/${creatorAddress}`);
+      const files = await api.get(`/api/v1/payment-links/${creatorAddress}`) as { data: Array<{ cid: string }> };
 
       const links: PaymentLink[] = [];
 
@@ -184,7 +187,7 @@ export class UnifiedIPFSService {
   ): Promise<PaymentLink | null> {
     try {
       // Search for the file by linkId keyvalue
-      const files = await api.get(`/api/v1/payment-links/details/${linkId}`);
+      const files = await api.get(`/api/v1/payment-links/details/${linkId}`) as { data: { cid: string } | null };
 
       // console.log(files);
 
@@ -195,8 +198,8 @@ export class UnifiedIPFSService {
       // const file = files.data[0];
 
       // console.log(file);
-      const ipfsLinkData = await this.retrieveIPFSLinkData(files.data?.cid);
-      return await this.convertToPaymentLink(ipfsLinkData, files.data?.cid);
+      const ipfsLinkData = await this.retrieveIPFSLinkData(files.data.cid);
+      return await this.convertToPaymentLink(ipfsLinkData, files.data.cid);
     } catch (error) {
       console.error("Failed to retrieve payment link:", error);
       return null;
@@ -226,7 +229,7 @@ export class UnifiedIPFSService {
     try {
       const deleteFile = await api.delete(
         `/api/v1/payment-links/${address}/delete/${linkId}`
-      );
+      ) as { error?: unknown; success?: boolean };
 
       if (deleteFile.error || !deleteFile.success) {
         return false;
@@ -284,7 +287,7 @@ export class UnifiedIPFSService {
       if (!urlRequest.ok) {
         throw new Error("Failed to get upload URL");
       }
-      const urlResponse = await urlRequest.json();
+      const urlResponse = await urlRequest.json() as { url: string };
 
       // Create a JSON file from the metadata
       const jsonContent = this.serializeWithBigInt(metadata);
@@ -296,7 +299,7 @@ export class UnifiedIPFSService {
         }
       );
 
-      // Upload using the signed URL
+      // Upload using Pinata SDK with signed URL (safe for client-side)
       const upload = await pinata.upload.public
         .file(file)
         .keyvalues({
@@ -356,7 +359,7 @@ export class UnifiedIPFSService {
 
     // Get token symbol from SUPPORTED_TOKENS configuration
     const getTokenSymbol = (tokenAddress: Address): string => {
-      const token = Object.values(SUPPORTED_TOKENS).find(
+      const token = SUPPORTED_TOKENS_ARRAY.find(
         t => t.address.toLowerCase() === tokenAddress.toLowerCase()
       );
       return token?.symbol || "UNKNOWN";
@@ -364,7 +367,7 @@ export class UnifiedIPFSService {
 
     // Get token decimals for proper formatting
     const getTokenDecimals = (symbol: string): number => {
-      const token = Object.values(SUPPORTED_TOKENS).find(t => t.symbol === symbol);
+      const token = SUPPORTED_TOKENS_ARRAY.find(t => t.symbol === symbol);
       return token?.decimals || 18; // Default to 18 decimals for ETH and unknown tokens
     };
 
@@ -409,9 +412,12 @@ export class UnifiedIPFSService {
   ): string | undefined {
     switch (metadata.linkType) {
       case 2: // PRODUCT
-        return (metadata as any).images?.[0];
+        const productImages = (metadata as unknown as Record<string, unknown>).images as string[] | undefined;
+        return productImages?.[0];
       case 3: // CONTENT
-        return (metadata as any).previewContent?.images?.[0];
+        const previewContent = (metadata as unknown as Record<string, unknown>).previewContent as Record<string, unknown> | undefined;
+        const contentImages = previewContent?.images as string[] | undefined;
+        return contentImages?.[0];
       default:
         return undefined;
     }
@@ -420,26 +426,30 @@ export class UnifiedIPFSService {
   /**
    * Validate IPFSLinkData structure
    */
-  private static validateIPFSLinkData(data: any): boolean {
+  private static validateIPFSLinkData(data: unknown): boolean {
     try {
-      return (
+      const obj = data as Record<string, unknown>;
+      const linkData = obj.linkData as Record<string, unknown>;
+      const metadata = obj.metadata as Record<string, unknown>;
+      
+      return Boolean(
         data &&
         typeof data === "object" &&
-        data.linkData &&
-        data.signature &&
-        data.metadata &&
-        data.version &&
-        typeof data.createdAt === "number" &&
-        typeof data.updatedAt === "number" &&
+        obj.linkData &&
+        obj.signature &&
+        obj.metadata &&
+        obj.version &&
+        typeof obj.createdAt === "number" &&
+        typeof obj.updatedAt === "number" &&
         // Validate linkData structure
-        data.linkData.linkId &&
-        data.linkData.creator &&
-        typeof data.linkData.linkType === "number" &&
-        typeof data.linkData.amountType === "number" &&
-        typeof data.linkData.usageType === "number" &&
+        linkData.linkId &&
+        linkData.creator &&
+        typeof linkData.linkType === "number" &&
+        typeof linkData.amountType === "number" &&
+        typeof linkData.usageType === "number" &&
         // Validate metadata structure
-        data.metadata.title &&
-        typeof data.metadata.linkType === "number"
+        metadata.title &&
+        typeof metadata.linkType === "number"
       );
     } catch (error) {
       return false;

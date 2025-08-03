@@ -1,12 +1,12 @@
-# Paylynk
+# Relynk
 
-### **Name:** Paylynk
+### **Name:** Relynk
 
 **Tagline:** _"Create. Share. Get Paid. All Onchain."_
 
 ### 🎯 **Overview:**
 
-**Paylynk** is a Web3-native monetization tool that lets creators, freelancers, and digital hustlers **create payment links**, **sell digital products**, and **unlock content access** — all without relying on Web2 platforms or centralized gatekeepers.
+**Relynk** is a Web3-native monetization tool that lets creators, freelancers, and digital hustlers **create payment links**, **sell digital products**, and **unlock content access** — all without relying on Web2 platforms or centralized gatekeepers.
 
 It brings the simplicity of [lynk.id](http://lynk.id), **Mayar.id / Gumroad**, but powered by **crypto, smart contracts, and self-custody.**
 
