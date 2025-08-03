@@ -24,8 +24,9 @@ import {
 } from "lucide-react";
 
 export default function PaymentsPage() {
-  const { address, isConnected } = useAccount();
-  const { payments, stats, isLoading, error, refetch } = usePayments();
+  const { isConnected } = useAccount();
+  const { payments, stats, isLoading, error, isRefetching, refetch } =
+    usePayments();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "received" | "sent">(
     "all"
@@ -88,13 +89,15 @@ export default function PaymentsPage() {
             </p>
           </div>
           <Button
-            onClick={refetch}
-            disabled={isLoading}
+            onClick={() => refetch()}
+            disabled={isLoading || isRefetching}
             variant="neutral"
             className="border border-border shadow-shadow"
           >
             <RefreshCw
-              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              className={`h-4 w-4 mr-2 ${
+                isLoading || isRefetching ? "animate-spin" : ""
+              }`}
             />
             Refresh
           </Button>
@@ -102,7 +105,7 @@ export default function PaymentsPage() {
 
         {/* Payment Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {isLoading ? (
+          {isLoading || isRefetching ? (
             <>
               {[...Array(4)].map((_, i) => (
                 <Card key={i}>
@@ -228,7 +231,11 @@ export default function PaymentsPage() {
                 <div className="text-foreground/60">
                   Failed to load payment history: {error}
                 </div>
-                <Button onClick={refetch} variant="neutral" className="mt-4">
+                <Button
+                  onClick={() => refetch()}
+                  variant="neutral"
+                  className="mt-4"
+                >
                   Try Again
                 </Button>
               </div>

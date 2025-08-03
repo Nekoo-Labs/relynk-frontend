@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { processorClient } from "@/services/graphql";
 import { formatUnits } from "viem";
@@ -115,15 +115,6 @@ export interface PaymentStats {
 
 export function usePayments() {
   const { address } = useAccount();
-  const [payments, setPayments] = useState<PaymentTransaction[]>([]);
-  const [stats, setStats] = useState<PaymentStats>({
-    totalReceived: "$0.00",
-    totalSent: "$0.00",
-    pending: "$0.00",
-    thisMonth: "$0.00",
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const getTokenInfo = (tokenAddress: string) => {
     const token = Object.values(SUPPORTED_TOKENS).find(
@@ -145,7 +136,7 @@ export function usePayments() {
     data.received?.forEach((payment: any) => {
       const token = getTokenInfo(payment.token);
       const formattedAmount = formatTokenAmount(payment.amount, payment.token);
-      
+
       transactions.push({
         id: payment.id,
         type: "received",
@@ -156,7 +147,9 @@ export function usePayments() {
         to: payment.creator,
         status: "completed",
         txHash: payment.transactionHash_,
-        timestamp: new Date(parseInt(payment.timestamp_) * 1000).toLocaleString(),
+        timestamp: new Date(
+          parseInt(payment.timestamp_) * 1000
+        ).toLocaleString(),
         linkTitle: `Payment Link ${payment.linkId.slice(-8)}`,
         linkId: payment.linkId,
         linkType: payment.linkType,
@@ -167,7 +160,7 @@ export function usePayments() {
     data.sent?.forEach((payment: any) => {
       const token = getTokenInfo(payment.token);
       const formattedAmount = formatTokenAmount(payment.amount, payment.token);
-      
+
       transactions.push({
         id: payment.id,
         type: "sent",
@@ -178,7 +171,9 @@ export function usePayments() {
         to: payment.creator,
         status: "completed",
         txHash: payment.transactionHash_,
-        timestamp: new Date(parseInt(payment.timestamp_) * 1000).toLocaleString(),
+        timestamp: new Date(
+          parseInt(payment.timestamp_) * 1000
+        ).toLocaleString(),
         linkTitle: `Payment Link ${payment.linkId.slice(-8)}`,
         linkId: payment.linkId,
         linkType: payment.linkType,
@@ -188,8 +183,11 @@ export function usePayments() {
     // Process received donations
     data.donationsReceived?.forEach((donation: any) => {
       const token = getTokenInfo(donation.token);
-      const formattedAmount = formatTokenAmount(donation.amount, donation.token);
-      
+      const formattedAmount = formatTokenAmount(
+        donation.amount,
+        donation.token
+      );
+
       transactions.push({
         id: donation.id,
         type: "received",
@@ -200,7 +198,9 @@ export function usePayments() {
         to: donation.creator,
         status: "completed",
         txHash: donation.transactionHash_,
-        timestamp: new Date(parseInt(donation.timestamp_) * 1000).toLocaleString(),
+        timestamp: new Date(
+          parseInt(donation.timestamp_) * 1000
+        ).toLocaleString(),
         linkTitle: "Donation",
         linkId: donation.linkId,
         message: donation.message,
@@ -210,8 +210,11 @@ export function usePayments() {
     // Process sent donations
     data.donationsSent?.forEach((donation: any) => {
       const token = getTokenInfo(donation.token);
-      const formattedAmount = formatTokenAmount(donation.amount, donation.token);
-      
+      const formattedAmount = formatTokenAmount(
+        donation.amount,
+        donation.token
+      );
+
       transactions.push({
         id: donation.id,
         type: "sent",
@@ -222,7 +225,9 @@ export function usePayments() {
         to: donation.creator,
         status: "completed",
         txHash: donation.transactionHash_,
-        timestamp: new Date(parseInt(donation.timestamp_) * 1000).toLocaleString(),
+        timestamp: new Date(
+          parseInt(donation.timestamp_) * 1000
+        ).toLocaleString(),
         linkTitle: "Donation",
         linkId: donation.linkId,
         message: donation.message,
@@ -230,8 +235,9 @@ export function usePayments() {
     });
 
     // Sort by timestamp (newest first)
-    return transactions.sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    return transactions.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   };
 
@@ -247,11 +253,14 @@ export function usePayments() {
     // Calculate this month's transactions
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    
+
     const thisMonth = transactions
       .filter((t) => {
         const txDate = new Date(t.timestamp);
-        return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+        return (
+          txDate.getMonth() === currentMonth &&
+          txDate.getFullYear() === currentYear
+        );
       })
       .reduce((sum, t) => sum + parseFloat(t.formattedAmount), 0);
 
@@ -263,13 +272,27 @@ export function usePayments() {
     };
   };
 
-  const fetchPayments = async () => {
-    if (!address) return;
+  const {
+    data: paymentsData,
+    isLoading,
+    isRefetching,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["payments", address],
+    queryFn: async () => {
+      if (!address) {
+        return {
+          payments: [],
+          stats: {
+            totalReceived: "$0.00",
+            totalSent: "$0.00",
+            pending: "$0.00",
+            thisMonth: "$0.00",
+          },
+        };
+      }
 
-    setIsLoading(true);
-    setError(null);
-
-    try {
       const data = await processorClient.request(GET_USER_PAYMENTS, {
         creator: address.toLowerCase(),
         payer: address.toLowerCase(),
@@ -279,25 +302,29 @@ export function usePayments() {
       const processedPayments = processPaymentData(data);
       const calculatedStats = calculateStats(processedPayments);
 
-      setPayments(processedPayments);
-      setStats(calculatedStats);
-    } catch (err) {
-      console.error("Error fetching payments:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch payments");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPayments();
-  }, [address]);
+      return {
+        payments: processedPayments,
+        stats: calculatedStats,
+      };
+    },
+    enabled: !!address, // Only run query when address is available
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 3, // Retry failed requests 3 times
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+  });
 
   return {
-    payments,
-    stats,
+    payments: paymentsData?.payments || [],
+    stats: paymentsData?.stats || {
+      totalReceived: "$0.00",
+      totalSent: "$0.00",
+      pending: "$0.00",
+      thisMonth: "$0.00",
+    },
     isLoading,
-    error,
-    refetch: fetchPayments,
+    isRefetching,
+    error: error?.message || null,
+    refetch,
   };
 }
