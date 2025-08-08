@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { CreateLinkForm } from "@/components/create-link-form";
 import { Button } from "@/components/ui/button";
@@ -9,18 +9,16 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 export default function CreateLinkPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const typeParam = (searchParams.get("type") || "payment").toLowerCase();
+  const allowed = new Set(["payment", "donation", "product", "content"]);
+  type LinkTypeParam = "payment" | "donation" | "product" | "content";
+  const initialLinkType: LinkTypeParam = allowed.has(typeParam)
+    ? (typeParam as LinkTypeParam)
+    : "payment";
 
-  const handleSuccess = (linkId: string) => {
-    toast.success("Payment link created successfully! 🎉", {
-      duration: 5000,
-    });
-    // router.push(`/dashboard/links?created=${linkId}`);
-  };
-
-  const handleCancel = () => {
-    router.push("/dashboard/links");
-  };
+  const handleSuccess = () =>
+    toast.success("Payment link created successfully! 🎉", { duration: 5000 });
 
   return (
     <DashboardLayout>
@@ -48,8 +46,8 @@ export default function CreateLinkPage() {
           </div>
         </div>
 
-        {/* Create Link Form */}
-        <CreateLinkForm onSuccess={handleSuccess} />
+  {/* Create Link Form (type is chosen before entering this page) */}
+  <CreateLinkForm onSuccess={handleSuccess} initialLinkType={initialLinkType} />
       </div>
     </DashboardLayout>
   );

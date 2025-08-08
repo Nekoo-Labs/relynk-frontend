@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAccount, useSignMessage } from "wagmi";
@@ -54,9 +55,11 @@ import { toast } from "sonner";
 interface CreateLinkFormProps {
   onClose?: () => void;
   onSuccess?: (linkId: string) => void;
+  initialLinkType?: "payment" | "donation" | "product" | "content";
+  showTypeSelection?: boolean;
 }
 
-export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
+export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSelection = false }: CreateLinkFormProps) {
   const { address, isConnected, isConnecting } = useAccount();
   const { signMessage, isPending: isSigningPending } = useSignMessage();
   const { createLinkData } = useRelynkProcessor();
@@ -77,7 +80,7 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
     defaultValues: {
       title: "",
       description: "",
-      linkType: "payment" as const,
+      linkType: (initialLinkType || "payment") as LinkFormUIData["linkType"],
       amountType: "fixed" as const,
       usageType: "one_time" as const,
       amount: "",
@@ -442,42 +445,62 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
         </Card>
       )}
 
-      {/* Link Type Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Link className="h-5 w-5" />
-            Choose Link Type
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            {linkTypes.map((type) => {
-              const IconComponent = type.icon;
-              return (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => form.setValue("linkType", type.id)}
-                  className={`p-4 border-2 rounded-base text-left transition-all ${
-                    watchedLinkType === type.id
-                      ? "border-main bg-main/10 shadow-shadow"
-                      : "border-border hover:border-main/50"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-heading text-foreground mb-1">
-                    <IconComponent className="h-5 w-5" />
-                    {type.label}
-                  </div>
-                  <p className="text-sm text-foreground/60">
-                    {type.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Link Type Selection (hidden by default; users choose type before this page) */}
+      {showTypeSelection && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Link className="h-5 w-5" />
+              Choose Link Type
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+              role="radiogroup"
+              aria-label="Choose Link Type"
+            >
+              {linkTypes.map((type) => {
+                const IconComponent = type.icon;
+                const selected = watchedLinkType === type.id;
+                return (
+                  <button
+                    key={type.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => form.setValue("linkType", type.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        form.setValue("linkType", type.id);
+                      }
+                    }}
+                    className={
+                      `group relative text-left rounded-2xl border-2 p-4 transition-all focus:outline-none focus:ring-2 focus:ring-main focus:ring-offset-2 ${
+                        selected
+                          ? "border-main/80 bg-main/5 shadow-shadow"
+                          : "border-border hover:border-main/50"
+                      }`
+                    }
+                  >
+                    <div className="absolute inset-0 rounded-2xl pointer-events-none" />
+                    <div className="flex items-center gap-2 font-heading text-foreground mb-2">
+                      <span className={`flex h-7 w-7 items-center justify-center rounded-full border ${selected ? "border-main bg-main/10 text-main" : "border-border text-foreground/70"}`}>
+                        <IconComponent className="h-4 w-4" />
+                      </span>
+                      <span>{type.label}</span>
+                    </div>
+                    <p className="text-sm text-foreground/70 leading-snug">
+                      {type.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Link Details Form */}
       <Form {...form}>
@@ -587,10 +610,12 @@ export function CreateLinkForm({ onClose, onSuccess }: CreateLinkFormProps) {
                   ) : (
                     <div className="relative border-2 border-border rounded-base p-4">
                       <div className="flex items-start gap-4">
-                        <img
+                        <Image
                           src={preparedImage.preview}
                           alt="Preview"
-                          className="w-20 h-20 object-cover rounded-base"
+                          width={80}
+                          height={80}
+                          className="rounded-base object-cover"
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium">

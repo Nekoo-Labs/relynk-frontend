@@ -8,6 +8,8 @@ import { Shield, CreditCard, Users, Zap, CheckCircle } from "lucide-react";
 import { fadeInUp, scaleOnHover, staggerContainer } from "@/lib/motion-variant";
 import GridPattern from "@/components/ui/grid-pattern";
 import Link from "next/link";
+import { ConnectButton } from "@xellar/kit";
+import { useRouter } from "next/navigation";
 
 export default function HilightedSection() {
   const useCasesRef = useRef(null);
@@ -16,6 +18,7 @@ export default function HilightedSection() {
     once: true,
     margin: "-100px",
   });
+  const router = useRouter();
 
   return (
     <section className="w-full max-w-6xl mx-auto bg-white min-h-[400px] rounded-tr-4xl rounded-bl-4xl border-2 border-shadow shadow-shadow relative overflow-hidden my-12">
@@ -225,16 +228,27 @@ export default function HilightedSection() {
               variants={fadeInUp}
             >
               <motion.div {...scaleOnHover}>
-                <Link href="/dashboard">
-                  <Button className="bg-main text-white hover:bg-main/90 text-xl px-12 py-6 shadow-xl">
-                    <motion.span
-                      animate={{ x: [0, 5, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
+                <ConnectButton.Custom>
+                  {({ isConnected, openConnectModal }) => (
+                    <Button 
+                      className="bg-main text-white hover:bg-main/90 text-xl px-12 py-6 shadow-xl"
+                      onClick={() => {
+                        if (isConnected) {
+                          router.push("/dashboard");
+                        } else {
+                          openConnectModal();
+                        }
+                      }}
                     >
-                      Get Started Now
-                    </motion.span>
-                  </Button>
-                </Link>
+                      <motion.span
+                        animate={{ x: [0, 5, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        Get Started Now
+                      </motion.span>
+                    </Button>
+                  )}
+                </ConnectButton.Custom>
               </motion.div>
               <motion.div {...scaleOnHover}>
                 <Button

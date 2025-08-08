@@ -2,15 +2,15 @@
 
 import {
   BarChart3,
-  CreditCard,
+  ArrowLeftRight,
   Home,
   Link as LinkIcon,
-  Plus,
   Settings,
   User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CreateLinkLauncher } from "@/components/payment/create-link-launcher";
 
 import {
   Sidebar,
@@ -33,24 +33,24 @@ const menuItems = [
     icon: Home,
   },
   {
-    title: "Profile",
-    url: "/dashboard/profile",
-    icon: User,
-  },
-  {
     title: "Links",
     url: "/dashboard/links",
     icon: LinkIcon,
   },
   {
-    title: "Payments",
+    title: "Transactions",
     url: "/dashboard/payments",
-    icon: CreditCard,
+  icon: ArrowLeftRight,
   },
   {
     title: "Analytics",
     url: "/dashboard/analytics",
     icon: BarChart3,
+  },
+  {
+    title: "Profile",
+    url: "/dashboard/profile",
+    icon: User,
   },
   {
     title: "Settings",
@@ -100,16 +100,11 @@ export function DashboardSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
+      <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/links/create">
-                    <Plus className="h-4 w-4" />
-                    <span>Create Link</span>
-                  </Link>
-                </SidebarMenuButton>
+        <CreateLinkLauncher />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

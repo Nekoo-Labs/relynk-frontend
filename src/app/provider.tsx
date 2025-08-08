@@ -4,9 +4,10 @@ import { Config, cookieStorage, createStorage, WagmiProvider } from "wagmi";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { XellarKitProvider, defaultConfig, darkTheme } from "@xellar/kit";
-import { liskSepolia } from "viem/chains";
+import { liskSepolia, scrollSepolia } from "viem/chains";
 import { SessionProvider } from "next-auth/react";
 import { queryClient } from "@/services/api";
+import { NetworkAlert } from "@/components/ui/network-alert";
 
 const config = defaultConfig({
   appName: "Xellar",
@@ -20,7 +21,7 @@ const config = defaultConfig({
   storage: createStorage({
     storage: cookieStorage,
   }),
-  chains: [liskSepolia],
+  chains: [liskSepolia, scrollSepolia],
 }) as Config;
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <XellarKitProvider theme={darkTheme}>{children}</XellarKitProvider>
+          <NetworkAlert />
           {/* Only show devtools in development */}
           {process.env.NODE_ENV === 'development' && (
             <ReactQueryDevtools 

@@ -24,14 +24,35 @@ import {
 } from "lucide-react";
 import { motion, useTransform, useInView, useScroll } from "motion/react";
 import { useRef } from "react";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@xellar/kit";
+import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll();
+  const { isConnected } = useAccount();
+  const router = useRouter();
 
   const heroInView = useInView(heroRef, { once: true, margin: "-100px" });
 
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+
+  const handleCreateLinkClick = () => {
+    if (isConnected) {
+      router.push("/dashboard/links/create");
+    } else {
+      // Will be handled by ConnectButton.Custom
+    }
+  };
+
+  const handleDashboardClick = () => {
+    if (isConnected) {
+      router.push("/dashboard");
+    } else {
+      // Will be handled by ConnectButton.Custom
+    }
+  };
 
   return (
     <section className="relative min-h-[600px] lg:min-h-[700px] flex flex-col pt-[calc(4rem+40px)] pb-20 items-center overflow-hidden">
@@ -255,26 +276,46 @@ export default function HeroSection() {
           variants={fadeInUp}
         >
           <motion.div {...scaleOnHover}>
-            <Button
-              className="bg-main text-white hover:bg-main/90 text-lg px-10 py-5 shadow-xl"
-              onClick={() => (window.location.href = "/dashboard/links/create")}
-            >
-              <motion.span
-                animate={{ x: [0, 5, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                Create Your Link
-              </motion.span>
-            </Button>
+            <ConnectButton.Custom>
+              {({ isConnected, openConnectModal }) => (
+                <Button
+                  className="bg-main text-white hover:bg-main/90 text-lg px-10 py-5 shadow-xl"
+                  onClick={() => {
+                    if (isConnected) {
+                      router.push("/dashboard/links/create");
+                    } else {
+                      openConnectModal();
+                    }
+                  }}
+                >
+                  <motion.span
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    Create Your Link
+                  </motion.span>
+                </Button>
+              )}
+            </ConnectButton.Custom>
           </motion.div>
           <motion.div {...scaleOnHover}>
-            <Button
-              variant="neutral"
-              className="text-lg px-10 py-5 border-2 border-main/20 shadow-main/20! shadow-sm"
-              onClick={() => (window.location.href = "/dashboard")}
-            >
-              View Dashboard
-            </Button>
+            <ConnectButton.Custom>
+              {({ isConnected, openConnectModal }) => (
+                <Button
+                  variant="neutral"
+                  className="text-lg px-10 py-5 border-2 border-main/20 shadow-main/20! shadow-sm"
+                  onClick={() => {
+                    if (isConnected) {
+                      router.push("/dashboard");
+                    } else {
+                      openConnectModal();
+                    }
+                  }}
+                >
+                  View Dashboard
+                </Button>
+              )}
+            </ConnectButton.Custom>
           </motion.div>
         </motion.div>
       </motion.div>

@@ -19,6 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { CreateLinkLauncher } from "@/components/payment/create-link-launcher";
 import { PaymentLink, LinkType } from "@/types/relynk";
 import { toast } from "sonner";
 import {
@@ -61,7 +62,7 @@ export default function LinksPage() {
     try {
       await navigator.clipboard.writeText(linkUrl);
       toast.success("Link copied to clipboard! 📋");
-    } catch (error) {
+  } catch {
       toast.error("Failed to copy link");
     }
   };
@@ -153,12 +154,7 @@ export default function LinksPage() {
               Manage your payment links and track their performance
             </p>
           </div>
-          <Link href="/dashboard/links/create">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Link
-            </Button>
-          </Link>
+          <CreateLinkLauncher />
         </div>
 
         {/* Search and Filters */}
@@ -235,14 +231,7 @@ export default function LinksPage() {
                     ? "No links found matching your search."
                     : "No payment links found."}
                 </p>
-                {!searchTerm && (
-                  <Link href="/dashboard/links/create">
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Your First Link
-                    </Button>
-                  </Link>
-                )}
+                {!searchTerm && <CreateLinkLauncher />}
               </div>
             ) : (
               <div className="space-y-4">
