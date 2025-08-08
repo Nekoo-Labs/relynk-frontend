@@ -7,7 +7,6 @@ import HeroSection from "@/components/views/homepage/hero";
 import FeaturesSection from "@/components/views/homepage/features";
 import HowItWorksSection from "@/components/views/homepage/how-it-works";
 import HilightedSection from "@/components/views/homepage/hilighted";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HomePage() {
   const { isAuthenticated, isConnecting } = useSiweAuth();
@@ -22,26 +21,16 @@ export default function HomePage() {
     }
   }, [isAuthenticated, isConnecting, router, isRedirecting]);
 
-  // Show loading state while connecting or redirecting
-  if (isConnecting) {
+  // Only show a loading screen when actually redirecting to dashboard
+  if (isAuthenticated && isRedirecting) {
     return (
-      <div className="min-h-[600px] flex flex-col space-y-8 p-6">
-        <div className="text-center space-y-4">
-          <Skeleton className="h-12 w-3/4 mx-auto" />
-          <Skeleton className="h-6 w-1/2 mx-auto" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-48" />
-          <Skeleton className="h-48" />
-          <Skeleton className="h-48" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary-background/30">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main" />
+          <p className="text-foreground/70">Taking you to your dashboard…</p>
         </div>
       </div>
     );
-  }
-
-  // Don't render the homepage content if user is authenticated and redirecting
-  if (isAuthenticated && isRedirecting) {
-    return null;
   }
 
   return (
