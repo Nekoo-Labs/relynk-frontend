@@ -3,6 +3,9 @@ import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "./provider";
 import { Toaster } from "@/components/ui/sonner";
+import { cookieToInitialState } from "wagmi";
+import { getConfig } from "@/lib/wagmi-config";
+import { headers } from "next/headers";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -15,16 +18,19 @@ export const metadata: Metadata = {
   description: "Create. Share. Get Paid",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialState = cookieToInitialState(
+    getConfig(),
+    (await headers()).get("cookie")
+  );
   return (
     <html lang="en">
       <body className={`${spaceGrotesk.variable} antialiased`}>
-        {/* <ConsoleFilter /> */}
-        <Web3Provider>{children}</Web3Provider>
+        <Web3Provider initialState={initialState}>{children}</Web3Provider>
         <Toaster />
       </body>
     </html>

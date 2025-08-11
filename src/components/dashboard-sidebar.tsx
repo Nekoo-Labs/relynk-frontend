@@ -112,7 +112,7 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t-2 border-border">
-        <SidebarMenu>
+        {/* <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <div className="flex items-center gap-2 p-2">
@@ -128,7 +128,7 @@ export function DashboardSidebar() {
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
-        </SidebarMenu>
+        </SidebarMenu> */}
       </SidebarFooter>
     </Sidebar>
   );

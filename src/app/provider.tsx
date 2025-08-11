@@ -1,6 +1,12 @@
 "use client";
 
-import { Config, cookieStorage, createStorage, WagmiProvider } from "wagmi";
+import {
+  Config,
+  cookieStorage,
+  createStorage,
+  State,
+  WagmiProvider,
+} from "wagmi";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { XellarKitProvider, defaultConfig, darkTheme } from "@xellar/kit";
@@ -24,16 +30,22 @@ const config = defaultConfig({
   chains: [liskSepolia, scrollSepolia],
 }) as Config;
 
-export function Web3Provider({ children }: { children: React.ReactNode }) {
+export function Web3Provider({
+  children,
+  initialState,
+}: {
+  children: React.ReactNode;
+  initialState?: State;
+}) {
   return (
     <SessionProvider>
-      <WagmiProvider config={config}>
+      <WagmiProvider config={config} initialState={initialState}>
         <QueryClientProvider client={queryClient}>
           <XellarKitProvider theme={darkTheme}>{children}</XellarKitProvider>
           <NetworkAlert />
           {/* Only show devtools in development */}
-          {process.env.NODE_ENV === 'development' && (
-            <ReactQueryDevtools 
+          {process.env.NODE_ENV === "development" && (
+            <ReactQueryDevtools
               initialIsOpen={false}
               buttonPosition="bottom-right"
             />
