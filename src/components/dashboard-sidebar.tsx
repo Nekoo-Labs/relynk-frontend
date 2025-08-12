@@ -7,6 +7,7 @@ import {
   Link as LinkIcon,
   Settings,
   User,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,6 +26,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+import { useSiweAuth } from "@/hooks/use-siwe-auth";
+import SwitchNetwork from "./ui/switch-network";
+import { Button } from "./ui/button";
+
 // Menu items for the dashboard
 const menuItems = [
   {
@@ -40,7 +45,7 @@ const menuItems = [
   {
     title: "Transactions",
     url: "/dashboard/payments",
-  icon: ArrowLeftRight,
+    icon: ArrowLeftRight,
   },
   {
     title: "Analytics",
@@ -61,6 +66,7 @@ const menuItems = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const { address, logout } = useSiweAuth();
 
   return (
     <Sidebar>
@@ -100,11 +106,11 @@ export function DashboardSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-      <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
+          <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-        <CreateLinkLauncher />
+                <CreateLinkLauncher />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -112,23 +118,29 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t-2 border-border">
-        {/* <SidebarMenu>
+        <SidebarMenu className="sm:hidden">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <div className="flex items-center gap-2 p-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-base bg-main/10 text-main">
-                  <User className="h-4 w-4" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-base">User</span>
-                  <span className="text-xs text-foreground/60">
-                    0x1234...5678
-                  </span>
-                </div>
+            <div className="flex flex-col items-center gap-3">
+              <SwitchNetwork variant="neutral" size="sm" className="w-full" />
+              <div className="bg-main/20 w-full flex items-center gap-2 px-3 py-1.5 rounded-base border border-border">
+                <User className="h-4 w-4 text-foreground/60" />
+                <span className="text-sm text-center mx-auto text-foreground/80 font-mono">
+                  {address
+                    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+                    : ""}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="hover:bg-main/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
               </div>
-            </SidebarMenuButton>
+            </div>
           </SidebarMenuItem>
-        </SidebarMenu> */}
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

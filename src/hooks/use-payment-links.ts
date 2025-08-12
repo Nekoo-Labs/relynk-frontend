@@ -191,27 +191,39 @@ export function useDeletePaymentLink() {
   });
 }
 
+type FilterEnum = "all" | "active" | "inactive";
+
 /**
  * Hook to get payment links for the current user with search functionality
  */
-export function useUserPaymentLinks(searchTerm?: string) {
+export function useUserPaymentLinks(
+  searchTerm?: string,
+  filterType: FilterEnum = "all"
+) {
   const { address } = useAccount();
   const { data: links = [], ...queryResult } = usePaymentLinks(address);
 
-  // Filter links based on search term
-  const filteredLinks = searchTerm?.trim()
-    ? links.filter(
-        (link) =>
-          link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          link.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          link.id.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : links;
+  const filteredLinks = links.filter((link) => {
+    const matchesSearch =
+      !searchTerm?.trim() ||
+      link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.id.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesFilter =
+      filterType === "all" ||
+      (filterType === "active" && link.isActive) ||
+      (filterType === "inactive" && !link.isActive);
+
+    return matchesSearch && matchesFilter;
+  });
 
   return {
     ...queryResult,
     data: filteredLinks,
     totalCount: links.length,
     filteredCount: filteredLinks.length,
+    activeLinks: links.filter((link) => link?.isActive).length,
+    inactiveLinks: links.filter((link) => !link?.isActive).length,
   };
 }

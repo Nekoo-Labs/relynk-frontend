@@ -4,7 +4,11 @@ import { Button } from "./button";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { liskSepolia, scrollSepolia } from "viem/chains";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type SwitchNetworkProps = {
   className?: string;
@@ -15,7 +19,11 @@ type SwitchNetworkProps = {
 // App-supported chains (extend here when adding more)
 const APP_SUPPORTED_CHAINS = [liskSepolia, scrollSepolia] as const;
 
-export function SwitchNetwork({ className, variant, size }: SwitchNetworkProps) {
+export function SwitchNetwork({
+  className,
+  variant,
+  size,
+}: SwitchNetworkProps) {
   const { isConnected, chain: accountChain } = useAccount();
   const hookChainId = useChainId();
   const { switchChain, isPending } = useSwitchChain();
@@ -27,11 +35,13 @@ export function SwitchNetwork({ className, variant, size }: SwitchNetworkProps) 
     return null;
   }
 
-  const currentName = APP_SUPPORTED_CHAINS.find((c) => c.id === activeChainId)?.name;
+  const currentName = APP_SUPPORTED_CHAINS.find(
+    (c) => c.id === activeChainId
+  )?.name;
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
         <Button
           disabled={isPending}
           variant={variant}
