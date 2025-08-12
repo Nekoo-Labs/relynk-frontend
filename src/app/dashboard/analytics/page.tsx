@@ -94,7 +94,7 @@ export default function AnalyticsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-y-2 items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading text-foreground">
               📊 Analytics
@@ -116,7 +116,7 @@ export default function AnalyticsPage() {
               />
               Refresh
             </Button>
-            <Button 
+            <Button
               className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow"
               onClick={handleExportCSV}
               disabled={isLoading || !stats}
@@ -130,27 +130,29 @@ export default function AnalyticsPage() {
         {/* Time Filter */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-base text-foreground/60 mr-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2 @container">
+              <div className="text-sm min-w-max font-base text-foreground/60 mr-2">
                 Time Period:
-              </span>
-              {timeFilters.map((filter) => (
-                <Button
-                  key={filter.value}
-                  variant={
-                    selectedTimeRange === filter.value ? "default" : "neutral"
-                  }
-                  size="sm"
-                  onClick={() => setSelectedTimeRange(filter.value)}
-                  className={
-                    selectedTimeRange === filter.value
-                      ? "bg-main text-main-foreground shadow-shadow"
-                      : "border border-border shadow-shadow"
-                  }
-                >
-                  {filter.label}
-                </Button>
-              ))}
+              </div>
+              <div className="w-full flex gap-2 items-center-safe overflow-x-auto">
+                {timeFilters.map((filter) => (
+                  <Button
+                    key={filter.value}
+                    variant={
+                      selectedTimeRange === filter.value ? "default" : "neutral"
+                    }
+                    size="sm"
+                    onClick={() => setSelectedTimeRange(filter.value)}
+                    className={
+                      selectedTimeRange === filter.value
+                        ? "bg-main text-main-foreground shadow-shadow"
+                        : "border border-border shadow-shadow"
+                    }
+                  >
+                    {filter.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -396,9 +398,9 @@ export default function AnalyticsPage() {
                 {topPerformingLinks.map((link, index) => (
                   <div
                     key={link.linkId}
-                    className="flex items-center justify-between p-4 border border-border rounded-base bg-secondary-background"
+                    className="flex flex-col sm:flex-row gap-y-4 items-center justify-between p-4 border border-border rounded-base bg-secondary-background"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center text-center sm:text-start gap-4">
                       <div className="flex h-8 w-8 items-center justify-center rounded-base bg-main text-main-foreground font-heading text-sm">
                         {index + 1}
                       </div>
@@ -412,7 +414,7 @@ export default function AnalyticsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-6 text-sm">
+                    <div className="flex flex-col sm:flex-row items-center gap-6 text-sm">
                       <div className="text-center">
                         <p className="font-heading text-foreground">
                           {link.clicks}

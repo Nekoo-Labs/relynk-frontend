@@ -19,7 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { CreateLinkLauncher } from "@/components/payment/create-link-launcher";
+import CreateLinkLauncher from "@/components/payment/create-link-launcher";
 import { PaymentLink, LinkType } from "@/types/relynk";
 import { toast } from "sonner";
 import {
@@ -62,7 +62,7 @@ export default function LinksPage() {
     try {
       await navigator.clipboard.writeText(linkUrl);
       toast.success("Link copied to clipboard! 📋");
-  } catch {
+    } catch {
       toast.error("Failed to copy link");
     }
   };
@@ -120,7 +120,7 @@ export default function LinksPage() {
                 Manage your payment links and track their performance
               </p>
             </div>
-            <Link href="/dashboard/links/create">
+            <Link href="/dashboard/links">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Link
@@ -147,7 +147,7 @@ export default function LinksPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-y-2 items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Payment Links</h1>
             <p className="text-muted-foreground">
@@ -238,22 +238,28 @@ export default function LinksPage() {
                 {filteredLinks.map((link) => (
                   <div
                     key={link.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-base bg-secondary-background hover:bg-background transition-colors"
+                    className="flex flex-wrap gap-y-2 items-center justify-between p-4 border border-border rounded-base bg-secondary-background hover:bg-background transition-colors"
                   >
                     <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
                         <h3 className="font-semibold">{link.title}</h3>
-                        <Badge
-                          className={`text-xs ${linkTypeStyles[link.linkType]}`}
-                        >
-                          {linkTypeLabels[link.linkType]}
-                        </Badge>
-                        <StatusBadge status={getStatusFromLink(link)} />
+                        <div className="flex gap-1">
+                          <Badge
+                            className={`text-xs ${
+                              linkTypeStyles[link.linkType]
+                            }`}
+                          >
+                            {linkTypeLabels[link.linkType]}
+                          </Badge>
+                          <StatusBadge status={getStatusFromLink(link)} />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="truncate max-w-md">
-                          {generateLinkUrl(link.id)}
-                        </span>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground @container">
+                        <div className="w-full overflow-x-auto">
+                          <code className="max-w-md">
+                            {generateLinkUrl(link.id)}
+                          </code>
+                        </div>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -275,7 +281,7 @@ export default function LinksPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-6 text-sm">
+                    <div className="flex flex-wrap items-center gap-6 gap-y-4 text-sm">
                       <div className="text-center">
                         <p className="font-semibold">-</p>
                         <p className="text-muted-foreground">Clicks</p>

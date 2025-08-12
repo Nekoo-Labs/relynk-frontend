@@ -53,13 +53,15 @@ export function WithdrawHistory() {
   };
 
   const getTokenInfo = (symbol: string) => {
-    return Object.values(SUPPORTED_TOKENS).find(token => token.symbol === symbol);
+    return Object.values(SUPPORTED_TOKENS).find(
+      (token) => token.symbol === symbol
+    );
   };
 
   const formatTokenAmount = (amount: string, symbol: string) => {
     const tokenInfo = getTokenInfo(symbol);
     if (!tokenInfo) return `${amount} ${symbol}`;
-    
+
     const formatted = formatUnits(BigInt(amount), tokenInfo.decimals);
     return `${parseFloat(formatted).toFixed(2)} ${symbol}`;
   };
@@ -90,7 +92,9 @@ export function WithdrawHistory() {
           <div className="text-center py-8 text-foreground/60">
             <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No withdrawal history yet.</p>
-            <p className="text-sm">Your withdrawals will appear here once you make them.</p>
+            <p className="text-sm">
+              Your withdrawals will appear here once you make them.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -99,12 +103,15 @@ export function WithdrawHistory() {
                 key={withdrawal.id}
                 className="p-4 border border-border rounded-base hover:bg-secondary/20 transition-colors"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row gap-y-2 items-center justify-between mb-3">
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4 text-green-600" />
                       <span className="font-semibold text-foreground">
-                        {formatTokenAmount(withdrawal.netAmount, withdrawal.token)}
+                        {formatTokenAmount(
+                          withdrawal.netAmount,
+                          withdrawal.token
+                        )}
                       </span>
                     </div>
                     {getStatusBadge(withdrawal.status)}
@@ -125,23 +132,26 @@ export function WithdrawHistory() {
                   <div>
                     <span className="text-foreground/60">Platform Fee:</span>
                     <p className="font-medium text-red-600">
-                      -{formatTokenAmount(withdrawal.platformFee, withdrawal.token)}
+                      -
+                      {formatTokenAmount(
+                        withdrawal.platformFee,
+                        withdrawal.token
+                      )}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-                  <div className="text-sm">
+                <div className="flex flex-col sm:flex-row gap-y-4 items-center justify-between mt-3 pt-3 border-t border-border">
+                  <div className="text-sm flex flex-col sm:flex-row items-center gap-2">
                     <span className="text-foreground/60">Transaction:</span>
                     <code className="ml-2 text-xs bg-secondary/50 px-2 py-1 rounded">
-                      {withdrawal.txHash.substring(0, 10)}...{withdrawal.txHash.substring(withdrawal.txHash.length - 8)}
+                      {withdrawal.txHash.substring(0, 10)}...
+                      {withdrawal.txHash.substring(
+                        withdrawal.txHash.length - 8
+                      )}
                     </code>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                  >
+                  <Button variant="outline" size="sm" asChild>
                     <a
                       href={`https://sepolia-blockscout.lisk.com/tx/${withdrawal.txHash}`}
                       target="_blank"

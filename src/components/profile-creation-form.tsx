@@ -19,11 +19,9 @@ import {
   Plus,
   X,
   Check,
-
   User,
   Link as LinkIcon,
   Palette,
-
   CreditCard,
   Heart,
   ShoppingBag,
@@ -37,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import ProfileColorPicker from "./color-picker-popover";
 
 const defaultTheme: ProfileTheme = {
   backgroundColor: "#ffffff",
@@ -596,36 +595,34 @@ export function ProfileCreationForm({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="flex flex-col justify-between">
                 <label className="block text-sm font-medium mb-2">
                   Background Color
                 </label>
-                <input
-                  type="color"
-                  value={formData.theme.backgroundColor}
-                  onChange={(e) =>
+                <ProfileColorPicker
+                  defaultColor={formData.theme.backgroundColor}
+                  onColorChange={(color) =>
                     handleInputChange("theme", {
                       ...formData.theme,
-                      backgroundColor: e.target.value,
+                      backgroundColor: color,
                     })
                   }
-                  className="w-full h-10 rounded-base border border-border"
+                  label="Pick a Color"
                 />
               </div>
-              <div>
+              <div className="flex flex-col justify-between">
                 <label className="block text-sm font-medium mb-2">
                   Accent Color
                 </label>
-                <input
-                  type="color"
-                  value={formData.theme.accentColor}
-                  onChange={(e) =>
+                <ProfileColorPicker
+                  defaultColor={formData.theme.accentColor}
+                  onColorChange={(color) =>
                     handleInputChange("theme", {
                       ...formData.theme,
-                      accentColor: e.target.value,
+                      accentColor: color,
                     })
                   }
-                  className="w-full h-10 rounded-base border border-border"
+                  label="Pick a Color"
                 />
               </div>
             </div>

@@ -30,6 +30,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Suspense } from "react";
+import CreateLinkLauncher from "@/components/payment/create-link-launcher";
 
 function DashboardContent() {
   const { address } = useAccount();
@@ -102,15 +103,7 @@ function DashboardContent() {
                 </Link>
               </Button>
             )}
-            <Button
-              asChild
-              className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow glow-hover hover:scale-105 transition-all duration-300"
-            >
-              <Link href="/dashboard/links/create">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Link
-              </Link>
-            </Button>
+            <CreateLinkLauncher />
           </div>
         </div>
 

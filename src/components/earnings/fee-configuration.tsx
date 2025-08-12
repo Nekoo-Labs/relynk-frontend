@@ -20,7 +20,7 @@ export function FeeConfiguration() {
     isPending,
     isConfirming,
     isSuccess,
-    hash
+    hash,
   } = useProfileRegistry();
 
   const [useCustomFees, setUseCustomFees] = useState(false);
@@ -28,16 +28,26 @@ export function FeeConfiguration() {
   const [hasChanges, setHasChanges] = useState(false);
 
   // Get profile to get username
-  const { data: profileResult } = useGetProfileByOwner(address || "0x0000000000000000000000000000000000000000");
-  const [profile, username] = (profileResult as [unknown, string] | undefined) || [null, ""];
+  const { data: profileResult } = useGetProfileByOwner(
+    address || "0x0000000000000000000000000000000000000000"
+  );
+  const [profile, username] = (profileResult as
+    | [unknown, string]
+    | undefined) || [null, ""];
 
   // Get current fee configuration
   const feeConfig = useGetProfileFeeConfig(username || "");
 
   // Update local state when data loads
   useEffect(() => {
-    const configData = feeConfig.data as { useCustomFees?: boolean; platformFeePercent?: number } | undefined;
-    if (configData && configData.useCustomFees !== undefined && configData.platformFeePercent !== undefined) {
+    const configData = feeConfig.data as
+      | { useCustomFees?: boolean; platformFeePercent?: number }
+      | undefined;
+    if (
+      configData &&
+      configData.useCustomFees !== undefined &&
+      configData.platformFeePercent !== undefined
+    ) {
       try {
         setUseCustomFees(Boolean(configData.useCustomFees));
         const feePercentValue = Number(configData.platformFeePercent) / 100; // Convert from basis points
@@ -55,15 +65,22 @@ export function FeeConfiguration() {
 
   // Track changes
   useEffect(() => {
-    const configData = feeConfig.data as { useCustomFees?: boolean; platformFeePercent?: number } | undefined;
-    if (configData && configData.useCustomFees !== undefined && configData.platformFeePercent !== undefined) {
+    const configData = feeConfig.data as
+      | { useCustomFees?: boolean; platformFeePercent?: number }
+      | undefined;
+    if (
+      configData &&
+      configData.useCustomFees !== undefined &&
+      configData.platformFeePercent !== undefined
+    ) {
       try {
         const currentUseCustom = Boolean(configData.useCustomFees);
         const currentPercent = Number(configData.platformFeePercent) / 100;
 
         if (!isNaN(currentPercent)) {
           const hasCustomFeeChange = useCustomFees !== currentUseCustom;
-          const hasPercentChange = Math.abs(feePercent[0] - currentPercent) > 0.01;
+          const hasPercentChange =
+            Math.abs(feePercent[0] - currentPercent) > 0.01;
 
           setHasChanges(hasCustomFeeChange || hasPercentChange);
         }
@@ -78,10 +95,12 @@ export function FeeConfiguration() {
     try {
       // Convert percentage to basis points (multiply by 100)
       const feePercentBasisPoints = Math.round(feePercent[0] * 100);
-      
+
       setProfileFeeConfig(useCustomFees, BigInt(feePercentBasisPoints));
-      
-      toast.success("Fee configuration updated! Please confirm the transaction.");
+
+      toast.success(
+        "Fee configuration updated! Please confirm the transaction."
+      );
     } catch (error) {
       console.error("Fee configuration error:", error);
       toast.error("Failed to update fee configuration");
@@ -89,8 +108,14 @@ export function FeeConfiguration() {
   };
 
   const handleReset = () => {
-    const configData = feeConfig.data as { useCustomFees?: boolean; platformFeePercent?: number } | undefined;
-    if (configData && configData.useCustomFees !== undefined && configData.platformFeePercent !== undefined) {
+    const configData = feeConfig.data as
+      | { useCustomFees?: boolean; platformFeePercent?: number }
+      | undefined;
+    if (
+      configData &&
+      configData.useCustomFees !== undefined &&
+      configData.platformFeePercent !== undefined
+    ) {
       try {
         setUseCustomFees(Boolean(configData.useCustomFees));
         const feePercentValue = Number(configData.platformFeePercent) / 100;
@@ -172,7 +197,8 @@ export function FeeConfiguration() {
           Personal Fee Configuration
         </CardTitle>
         <p className="text-sm text-foreground/60 mt-2">
-          Configure your individual platform fees. These settings only apply to your profile and earnings - they don't affect other users.
+          Configure your individual platform fees. These settings only apply to
+          your profile and earnings - they don&apos;t affect other users.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -180,7 +206,9 @@ export function FeeConfiguration() {
         <div className="p-6 border border-border rounded-base bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
-              <Label className="text-lg font-semibold text-foreground">Set Your Own Fee Rate</Label>
+              <Label className="text-lg font-semibold text-foreground">
+                Set Your Own Fee Rate
+              </Label>
               <p className="text-sm text-foreground/70 max-w-md">
                 Choose your personal withdrawal fee instead of the default 2.5%
               </p>
@@ -196,7 +224,8 @@ export function FeeConfiguration() {
           {!useCustomFees && (
             <div className="mt-4 p-3 bg-white/80 rounded-base border border-blue-200">
               <p className="text-sm text-blue-700">
-                💡 <strong>Turn on to save money</strong> - Set a lower fee rate for your withdrawals
+                💡 <strong>Turn on to save money</strong> - Set a lower fee rate
+                for your withdrawals
               </p>
             </div>
           )}
@@ -237,7 +266,9 @@ export function FeeConfiguration() {
           <div className="text-center">
             <p className="text-sm text-foreground/70">Currently using:</p>
             <p className="text-lg font-semibold text-foreground">
-              {useCustomFees ? `${feePercent[0].toFixed(1)}% (Custom)` : "2.5% (Default)"}
+              {useCustomFees
+                ? `${feePercent[0].toFixed(1)}% (Custom)`
+                : "2.5% (Default)"}
             </p>
           </div>
         </div>
@@ -248,17 +279,20 @@ export function FeeConfiguration() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Withdraw $100:</span>
-              <span className="font-medium">You get ${example100.netAmount.toFixed(2)}</span>
+              <span className="font-medium">
+                You get ${example100.netAmount.toFixed(2)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Withdraw $1,000:</span>
-              <span className="font-medium">You get ${example1000.netAmount.toFixed(2)}</span>
+              <span className="font-medium">
+                You get ${example1000.netAmount.toFixed(2)}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Info Box */}
-        
 
         {/* Action Buttons */}
         <div className="flex gap-2">
@@ -279,7 +313,7 @@ export function FeeConfiguration() {
               </>
             )}
           </Button>
-          
+
           {hasChanges && (
             <Button
               variant="outline"

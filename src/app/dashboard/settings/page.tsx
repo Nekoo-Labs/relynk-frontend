@@ -20,6 +20,13 @@ import {
   Percent,
 } from "lucide-react";
 import NextLink from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("fees");
@@ -99,12 +106,16 @@ export default function SettingsPage() {
                     <label className="text-sm font-base text-foreground/80 mb-2 block">
                       Default Currency
                     </label>
-                    <select className="w-full px-3 py-2 border border-border rounded-base shadow-shadow bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-main">
-                      <option>USD ($)</option>
-                      <option>USDC</option>
-                      <option>USDT</option>
-                      <option>IDRX</option>
-                    </select>
+                    <Select defaultValue="usdc">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="usdc">USDC</SelectItem>
+                        <SelectItem value="usdt">USDT</SelectItem>
+                        <SelectItem value="idrx">IDRX</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
@@ -128,7 +139,10 @@ export default function SettingsPage() {
                       </p>
                     </div>
                     <Button variant="neutral" size="sm" asChild>
-                      <NextLink href="/dashboard/earnings" className="flex items-center gap-2">
+                      <NextLink
+                        href="/dashboard/earnings"
+                        className="flex items-center gap-2"
+                      >
                         <Wallet className="h-4 w-4" />
                         Manage
                         <ExternalLink className="h-3 w-3" />
@@ -140,15 +154,24 @@ export default function SettingsPage() {
             )}
 
             {/* Other Tabs - Coming Soon */}
-            {(activeTab === "security" || activeTab === "notifications" || activeTab === "appearance" || activeTab === "domains") && (
+            {(activeTab === "security" ||
+              activeTab === "notifications" ||
+              activeTab === "appearance" ||
+              activeTab === "domains") && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     {activeTab === "security" && <Shield className="h-5 w-5" />}
-                    {activeTab === "notifications" && <Bell className="h-5 w-5" />}
-                    {activeTab === "appearance" && <Palette className="h-5 w-5" />}
+                    {activeTab === "notifications" && (
+                      <Bell className="h-5 w-5" />
+                    )}
+                    {activeTab === "appearance" && (
+                      <Palette className="h-5 w-5" />
+                    )}
                     {activeTab === "domains" && <Link className="h-5 w-5" />}
-                    {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Settings
+                    {activeTab.charAt(0).toUpperCase() +
+                      activeTab.slice(1)}{" "}
+                    Settings
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

@@ -17,7 +17,6 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
-
   Search,
   RefreshCw,
   Wallet,
@@ -79,7 +78,7 @@ export default function PaymentsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-y-2 items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading text-foreground">
               💰 Payments
@@ -162,7 +161,7 @@ export default function PaymentsPage() {
               </div>
 
               {/* Filter Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-foreground/60">
                   Filter by type:
                 </span>
@@ -178,7 +177,9 @@ export default function PaymentsPage() {
                         filterType === filter.key ? "default" : "neutral"
                       }
                       size="sm"
-                      onClick={() => setFilterType(filter.key as "all" | "received" | "sent")}
+                      onClick={() =>
+                        setFilterType(filter.key as "all" | "received" | "sent")
+                      }
                       className="border border-border"
                     >
                       {filter.label}
@@ -252,9 +253,9 @@ export default function PaymentsPage() {
                 {filteredPayments.map((payment, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between p-4 border border-border rounded-base bg-secondary-background hover:bg-background transition-colors"
+                    className="flex flex-col sm:flex-row gap-y-2 items-center justify-between p-4 border border-border rounded-base bg-secondary-background hover:bg-background transition-colors"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
                       <div
                         className={`p-2 rounded-base ${
                           payment.type === "received"
@@ -270,7 +271,7 @@ export default function PaymentsPage() {
                       </div>
 
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-center gap-2">
                           <span className="font-heading text-foreground">
                             {payment.amount}
                           </span>

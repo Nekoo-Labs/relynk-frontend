@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAccount } from "wagmi";
-import { CreateLinkLauncher } from "@/components/payment/create-link-launcher";
+import CreateLinkLauncher from "@/components/payment/create-link-launcher";
 
 import {
   Sidebar,

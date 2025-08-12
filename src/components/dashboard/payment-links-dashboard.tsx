@@ -272,7 +272,7 @@ export function PaymentLinksDashboard({
                 Manage your payment links and track performance
               </CardDescription>
             </div>
-            <Link href="/dashboard/links/create" className="shrink-0">
+            <Link href="/dashboard/links" className="shrink-0">
               <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 <span className="sm:hidden">Create New Link</span>
