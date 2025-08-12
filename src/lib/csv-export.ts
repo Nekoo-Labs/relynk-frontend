@@ -7,7 +7,7 @@ const SUPPORTED_TOKENS_ARRAY = Object.values(SUPPORTED_TOKENS);
 /**
  * Convert data to CSV format
  */
-function convertToCSV(data: any[], headers: string[]): string {
+function convertToCSV(data: Record<string, unknown>[], headers: string[]): string {
   const csvHeaders = headers.join(",");
   const csvRows = data.map(row => 
     headers.map(header => {
@@ -198,7 +198,14 @@ export function exportRevenueTrends(
   const filename = `relynk-revenue-trends-${timeRange}-${timestamp}.csv`;
   
   // Convert monthly earnings to CSV format
-  const trendsData: any[] = [];
+  const trendsData: Array<{
+    month: string;
+    token: string;
+    tokenAddress: string;
+    amount: string;
+    usdValue: string;
+    formattedAmount: string;
+  }> = [];
   
   Object.entries(monthlyEarnings).forEach(([month, tokenEarnings]) => {
     Object.entries(tokenEarnings).forEach(([tokenAddress, amount]) => {
@@ -215,7 +222,8 @@ export function exportRevenueTrends(
           month,
           token: token.symbol,
           tokenAddress,
-          amount: formattedAmount,
+          amount: formattedAmount.toString(),
+          usdValue: "0", // TODO: Add USD value calculation
           formattedAmount: `${formattedAmount} ${token.symbol}`
         });
       }

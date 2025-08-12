@@ -41,8 +41,7 @@ export default function ProfilePage() {
     usePaymentLinks(address!);
 
   // Get analytics data
-  const { stats: analyticsData, isLoading: isLoadingAnalytics } =
-    useAnalytics();
+  const { stats: analyticsData } = useAnalytics();
 
   // Use stable loading to prevent flashing
   const stableLoading = useStableLoading(isConnecting || isLoadingProfile, 500);

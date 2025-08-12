@@ -134,7 +134,7 @@ export class ProfileIPFSService {
             );
           })
       );
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

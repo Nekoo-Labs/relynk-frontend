@@ -17,7 +17,7 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
-  Filter,
+
   Search,
   RefreshCw,
   Wallet,
@@ -178,7 +178,7 @@ export default function PaymentsPage() {
                         filterType === filter.key ? "default" : "neutral"
                       }
                       size="sm"
-                      onClick={() => setFilterType(filter.key as any)}
+                      onClick={() => setFilterType(filter.key as "all" | "received" | "sent")}
                       className="border border-border"
                     >
                       {filter.label}

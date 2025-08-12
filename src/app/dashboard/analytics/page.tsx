@@ -26,7 +26,6 @@ import {
   useRevenueTrends,
 } from "@/hooks/use-analytics";
 import { usePaymentLinks } from "@/hooks/use-payment-links";
-import { SUPPORTED_TOKENS } from "@/lib/contracts";
 import { exportCompleteAnalytics } from "@/lib/csv-export";
 
 type TimeRange = "7d" | "30d" | "90d" | "1y";
@@ -45,7 +44,7 @@ export default function AnalyticsPage() {
   // Fetch analytics data using React Query
   const { stats, linkAnalytics, isLoading, error, refresh } = useAnalytics();
   const { data: paymentLinks = [] } = usePaymentLinks(address);
-  const timeRangeAnalytics = useTimeRangeAnalytics(selectedTimeRange);
+  const _timeRangeAnalytics = useTimeRangeAnalytics(selectedTimeRange);
   const topPerformingLinks = useTopPerformingLinks(5);
   // Map 1y to 90d for revenue trends since the hook doesn't support 1y
   const revenueTrendsTimeRange =
@@ -222,7 +221,7 @@ export default function AnalyticsPage() {
                   <div className="text-sm text-foreground/60 mb-4">
                     Monthly revenue for the last 6 months
                   </div>
-                  {revenueTrends.map((trend, index) => (
+                  {revenueTrends.map((trend, _index) => (
                     <div
                       key={trend.month}
                       className="flex items-center justify-between p-3 border border-border rounded-base"

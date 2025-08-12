@@ -66,7 +66,7 @@ export function usePaymentLink(linkId?: string) {
  */
 export function useCreatePaymentLink() {
   const queryClient = useQueryClient();
-  const { address } = useAccount();
+  const { address: _address } = useAccount();
 
   return useMutation({
     mutationFn: async ({
@@ -84,7 +84,7 @@ export function useCreatePaymentLink() {
         metadata
       );
     },
-    onSuccess: ({ ipfsHash, paymentLink }) => {
+    onSuccess: ({ ipfsHash: _ipfsHash, paymentLink }) => {
       // Invalidate and refetch payment links for the creator
       queryClient.invalidateQueries({
         queryKey: paymentLinksKeys.lists(),
@@ -129,7 +129,7 @@ export function useUpdatePaymentLink() {
         metadata
       );
     },
-    onSuccess: ({ ipfsHash, paymentLink }) => {
+    onSuccess: ({ ipfsHash: _ipfsHash, paymentLink }) => {
       // Invalidate and refetch payment links for the creator
       queryClient.invalidateQueries({
         queryKey: paymentLinksKeys.list(address),

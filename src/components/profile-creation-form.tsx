@@ -19,11 +19,11 @@ import {
   Plus,
   X,
   Check,
-  AlertCircle,
+
   User,
   Link as LinkIcon,
   Palette,
-  Share2,
+
   CreditCard,
   Heart,
   ShoppingBag,
@@ -229,7 +229,7 @@ export function ProfileCreationForm({
   };
 
   // Add selected payment links to form data
-  const addSelectedPaymentLinks = () => {
+  const _addSelectedPaymentLinks = () => {
     const selectedLinks = paymentLinks
       .filter((pl) => selectedPaymentLinks.has(pl.id))
       .map((pl) => convertPaymentLinkToProfileLink(pl));

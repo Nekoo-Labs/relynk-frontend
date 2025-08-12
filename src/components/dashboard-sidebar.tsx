@@ -7,9 +7,11 @@ import {
   Link as LinkIcon,
   Settings,
   User,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAccount } from "wagmi";
 import { CreateLinkLauncher } from "@/components/payment/create-link-launcher";
 
 import {
@@ -40,7 +42,12 @@ const menuItems = [
   {
     title: "Transactions",
     url: "/dashboard/payments",
-  icon: ArrowLeftRight,
+    icon: ArrowLeftRight,
+  },
+  {
+    title: "Earnings",
+    url: "/dashboard/earnings",
+    icon: Wallet,
   },
   {
     title: "Analytics",
@@ -61,6 +68,9 @@ const menuItems = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const { address: _address } = useAccount();
+
+  // Admin functions removed for security - end users should not have access
 
   return (
     <Sidebar>
@@ -86,7 +96,11 @@ export function DashboardSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.url}
-                    className="w-full"
+                    className={`w-full transition-all duration-200 ${
+                      pathname === item.url
+                        ? "bg-main text-main-foreground shadow-shadow rounded-base"
+                        : "hover:bg-main hover:rounded-base"
+                    }`}
                   >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
@@ -95,6 +109,8 @@ export function DashboardSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {/* Admin menu removed for security - end users should not have access to admin functions */}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

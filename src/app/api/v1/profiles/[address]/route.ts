@@ -24,11 +24,11 @@ export async function GET(
     });
 
     // Transform the response to match expected format
-    const profileFiles = files.map((file: any) => ({
+    const profileFiles = files.map((file) => ({
       cid: file.cid,
       name: file.name,
       size: file.size,
-      createdAt: file.date_pinned,
+      createdAt: file.created_at || new Date().toISOString(),
       keyvalues: file.keyvalues,
     }));
 

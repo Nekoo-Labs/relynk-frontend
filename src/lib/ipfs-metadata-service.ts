@@ -10,7 +10,7 @@ export class IPFSMetadataService {
   /**
    * Helper function to serialize objects with BigInt values
    */
-  private static serializeWithBigInt(obj: any): string {
+  private static serializeWithBigInt(obj: unknown): string {
     return JSON.stringify(obj, (key, value) => {
       if (typeof value === "bigint") {
         return value.toString();
@@ -25,18 +25,18 @@ export class IPFSMetadataService {
   private static deserializeWithBigInt(
     jsonString: string,
     bigIntFields: string[] = []
-  ): any {
+  ): unknown {
     const obj = JSON.parse(jsonString);
 
     // Recursively restore BigInt fields
-    const restoreBigInts = (target: any, path: string[] = []): any => {
+    const restoreBigInts = (target: unknown, path: string[] = []): unknown => {
       if (typeof target === "object" && target !== null) {
         for (const [key, value] of Object.entries(target)) {
           const currentPath = [...path, key];
           const fieldPath = currentPath.join(".");
 
           if (bigIntFields.includes(fieldPath) && typeof value === "string") {
-            target[key] = BigInt(value);
+            (target as Record<string, unknown>)[key] = BigInt(value);
           } else if (typeof value === "object") {
             restoreBigInts(value, currentPath);
           }
@@ -198,28 +198,32 @@ export class IPFSMetadataService {
   /**
    * Validates IPFSLinkData structure
    */
-  private static validateIPFSLinkData(data: any): boolean {
+  private static validateIPFSLinkData(data: unknown): boolean {
     try {
-      return (
-        data &&
-        typeof data === "object" &&
-        data.linkData &&
-        data.signature &&
-        data.metadata &&
-        data.version &&
-        typeof data.createdAt === "number" &&
-        typeof data.updatedAt === "number" &&
+      if (!data || typeof data !== "object") return false;
+
+      const dataObj = data as Record<string, unknown>;
+      const linkData = dataObj.linkData as Record<string, unknown> | undefined;
+      const metadata = dataObj.metadata as Record<string, unknown> | undefined;
+
+      return !!(
+        dataObj.linkData &&
+        dataObj.signature &&
+        dataObj.metadata &&
+        dataObj.version &&
+        typeof dataObj.createdAt === "number" &&
+        typeof dataObj.updatedAt === "number" &&
         // Validate linkData structure
-        data.linkData.linkId &&
-        data.linkData.creator &&
-        typeof data.linkData.linkType === "number" &&
-        typeof data.linkData.amountType === "number" &&
-        typeof data.linkData.usageType === "number" &&
+        linkData?.linkId &&
+        linkData?.creator &&
+        typeof linkData?.linkType === "number" &&
+        typeof linkData?.amountType === "number" &&
+        typeof linkData?.usageType === "number" &&
         // Validate metadata structure
-        data.metadata.title &&
-        typeof data.metadata.linkType === "number"
+        metadata?.title &&
+        typeof metadata?.linkType === "number"
       );
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

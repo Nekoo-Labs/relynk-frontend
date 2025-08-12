@@ -504,7 +504,7 @@ export class UnifiedIPFSService {
     try {
       const parsed = JSON.parse(metadataString);
       return parsed._isFallback === true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

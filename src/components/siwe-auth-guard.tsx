@@ -1,6 +1,6 @@
 "use client";
 
-import { useRequireSiweAuth } from "@/hooks/use-siwe-auth";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSiweAuth } from "@/hooks/use-siwe-auth";

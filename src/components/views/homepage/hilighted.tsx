@@ -7,7 +7,7 @@ import { useRef } from "react";
 import { Shield, CreditCard, Users, Zap, CheckCircle } from "lucide-react";
 import { fadeInUp, scaleOnHover, staggerContainer } from "@/lib/motion-variant";
 import GridPattern from "@/components/ui/grid-pattern";
-import Link from "next/link";
+
 import { ConnectButton } from "@xellar/kit";
 import { useRouter } from "next/navigation";
 

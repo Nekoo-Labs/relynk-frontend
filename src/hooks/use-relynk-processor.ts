@@ -17,10 +17,7 @@ import {
   PaymentLink,
   LinkMetadata,
 } from "@/types/relynk";
-import { getContractConfig, SUPPORTED_TOKENS } from "@/lib/contracts";
-
-// Create array version for easier iteration
-const SUPPORTED_TOKENS_ARRAY = Object.values(SUPPORTED_TOKENS);
+import { getContractConfig, getTokenConfig } from "@/lib/contracts";
 
 export function useRelynkProcessor() {
   const { address } = useAccount();
@@ -31,6 +28,10 @@ export function useRelynkProcessor() {
   // Get contract configuration for current chain
   const contracts = getContractConfig(chainId);
   const relynkProcessorConfig = contracts.RelynkProcessor;
+
+  // Get supported tokens for current chain
+  const supportedTokens = getTokenConfig(chainId);
+  const supportedTokensArray = Object.values(supportedTokens);
 
   // Wait for transaction confirmation
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
@@ -238,7 +239,7 @@ export function useRelynkProcessor() {
   ): Promise<PaymentLink> => {
     // Get token decimals for proper formatting
     const getTokenDecimals = (symbol: string): number => {
-      const token = SUPPORTED_TOKENS_ARRAY.find(
+      const token = supportedTokensArray.find(
         (t) => t.symbol === symbol
       );
       return token?.decimals || 18; // Default to 18 decimals
@@ -318,7 +319,8 @@ export function useRelynkProcessor() {
       formattedAmount: `${formattedAmount} ${tokenSymbol}`,
       shortId: linkData.linkId.slice(0, 8),
       previewImage:
-        (fullMetadata as any)?.images?.[0] || (fullMetadata as any)?.previewContent?.images?.[0],
+        (fullMetadata as { images?: string[]; previewContent?: { images?: string[] } })?.images?.[0] ||
+        (fullMetadata as { images?: string[]; previewContent?: { images?: string[] } })?.previewContent?.images?.[0],
     };
   };
 

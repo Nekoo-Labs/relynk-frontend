@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { StatCard } from "@/components/ui/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DashboardWelcomeCard } from "@/components/dashboard-welcome-card";
@@ -21,16 +21,13 @@ import {
   useTopPerformingLinks,
 } from "@/hooks/use-analytics";
 import {
-  BarChart3,
   CreditCard,
   Link as LinkIcon,
   MousePointer,
   Plus,
   TrendingUp,
-  Users,
   User,
   ExternalLink,
-  Sparkles,
 } from "lucide-react";
 import { Suspense } from "react";
 

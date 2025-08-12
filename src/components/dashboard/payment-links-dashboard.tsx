@@ -12,21 +12,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   PaymentLink,
   LinkType,
   CreatorStats,
-  LinkAnalytics,
+
 } from "@/types/relynk";
 import { Address } from "viem";
 import {
   Copy,
-  Edit,
-  Trash2,
-  ExternalLink,
   Search,
-  Filter,
   TrendingUp,
   DollarSign,
   Users,
@@ -35,11 +31,11 @@ import {
   Heart,
   ShoppingBag,
   FileText,
-  MoreHorizontal,
+
   Eye,
   Share,
 } from "lucide-react";
-import { formatEther } from "viem";
+
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -240,7 +236,7 @@ export function PaymentLinksDashboard({
   const [stats, setStats] = useState<CreatorStats>(mockStats);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<FilterEnum>("all");
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
 
   // Load payment links from storage
   useEffect(() => {

@@ -14,7 +14,7 @@ interface DashboardWelcomeCardProps {
 
 export function DashboardWelcomeCard({
   hasProfile,
-  username,
+  username: _username,
   onSkip,
 }: DashboardWelcomeCardProps) {
   const [showUsernameSetup, setShowUsernameSetup] = useState(false);
@@ -67,7 +67,7 @@ export function DashboardWelcomeCard({
                 Set up your username to create your personalized profile~ ✨
               </p>
               <p className="text-main text-xs mt-2 font-medium">
-                relynk.app/your-username
+                rely.ink/your-username
               </p>
             </div>
           </div>

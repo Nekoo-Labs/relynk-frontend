@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WalletInfo } from "@/components/wallet-info";
+import { FeeConfiguration } from "@/components/earnings/fee-configuration";
 import {
-  User,
   CreditCard,
   Shield,
   Bell,
@@ -14,9 +15,14 @@ import {
   Link,
   Trash2,
   Save,
+  Wallet,
+  ExternalLink,
+  Percent,
 } from "lucide-react";
+import NextLink from "next/link";
 
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("fees");
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -41,21 +47,22 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {[
-                  { icon: User, label: "Profile", active: true },
-                  { icon: CreditCard, label: "Billing", active: false },
-                  { icon: Shield, label: "Security", active: false },
-                  { icon: Bell, label: "Notifications", active: false },
-                  { icon: Palette, label: "Appearance", active: false },
-                  { icon: Link, label: "Domains", active: false },
-                ].map((item, index) => (
+                  { id: "fees", icon: Percent, label: "Platform Fees" },
+                  { id: "billing", icon: CreditCard, label: "Billing" },
+                  { id: "security", icon: Shield, label: "Security" },
+                  { id: "notifications", icon: Bell, label: "Notifications" },
+                  { id: "appearance", icon: Palette, label: "Appearance" },
+                  { id: "domains", icon: Link, label: "Domains" },
+                ].map((item) => (
                   <Button
-                    key={index}
-                    variant={item.active ? "default" : "neutral"}
+                    key={item.id}
+                    variant={activeTab === item.id ? "default" : "neutral"}
                     className={`w-full justify-start ${
-                      item.active
+                      activeTab === item.id
                         ? "bg-main text-main-foreground shadow-shadow"
                         : "hover:bg-secondary-background"
                     }`}
+                    onClick={() => setActiveTab(item.id)}
                   >
                     <item.icon className="h-4 w-4 mr-2" />
                     {item.label}
@@ -67,141 +74,94 @@ export default function SettingsPage() {
 
           {/* Settings Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Profile Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Profile Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
+            {/* Platform Fees Tab */}
+            {activeTab === "fees" && (
+              <>
+                {/* Wallet Connection */}
+                <WalletInfo />
+
+                {/* Platform Fee Configuration */}
+                <FeeConfiguration />
+              </>
+            )}
+
+            {/* Billing Tab */}
+            {activeTab === "billing" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Billing & Payment Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div>
                     <label className="text-sm font-base text-foreground/80 mb-2 block">
-                      First Name
+                      Default Currency
                     </label>
-                    <Input
-                      placeholder="John"
-                      className="border border-border shadow-shadow"
-                    />
+                    <select className="w-full px-3 py-2 border border-border rounded-base shadow-shadow bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-main">
+                      <option>USD ($)</option>
+                      <option>USDC</option>
+                      <option>USDT</option>
+                      <option>IDRX</option>
+                    </select>
                   </div>
+
                   <div>
                     <label className="text-sm font-base text-foreground/80 mb-2 block">
-                      Last Name
+                      Minimum Payment Amount
                     </label>
                     <Input
-                      placeholder="Doe"
-                      className="border border-border shadow-shadow"
+                      type="number"
+                      placeholder="1.00"
+                      className="border-2 border-border shadow-shadow"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="text-sm font-base text-foreground/80 mb-2 block">
-                    Email Address
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="john@example.com"
-                    className="border border-border shadow-shadow"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-base text-foreground/80 mb-2 block">
-                    Bio
-                  </label>
-                  <textarea
-                    placeholder="Tell us about yourself..."
-                    className="w-full min-h-[100px] px-3 py-2 border border-border rounded-base shadow-shadow bg-background text-foreground placeholder:text-foreground/60 focus:outline-none focus:ring-2 focus:ring-main"
-                  />
-                </div>
-
-                <Button className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow">
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Wallet Connection */}
-            <WalletInfo />
-
-            {/* Payment Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Payment Preferences
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-base text-foreground/80 mb-2 block">
-                    Default Currency
-                  </label>
-                  <select className="w-full px-3 py-2 border border-border rounded-base shadow-shadow bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-main">
-                    <option>USD ($)</option>
-                    <option>USDC</option>
-                    <option>USDT</option>
-                    <option>IDRX</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-base text-foreground/80 mb-2 block">
-                    Minimum Payment Amount
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="1.00"
-                    className="border-2 border-border shadow-shadow"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-border rounded-base">
-                  <div>
-                    <p className="font-heading text-foreground">
-                      Auto-withdraw
-                    </p>
-                    <p className="text-sm text-foreground/60">
-                      Automatically withdraw funds when threshold is reached
-                    </p>
+                  <div className="flex items-center justify-between p-4 border border-border rounded-base">
+                    <div>
+                      <p className="font-heading text-foreground">
+                        Earnings & Withdrawals
+                      </p>
+                      <p className="text-sm text-foreground/60">
+                        Manage your earnings, withdrawals, and fee settings
+                      </p>
+                    </div>
+                    <Button variant="neutral" size="sm" asChild>
+                      <NextLink href="/dashboard/earnings" className="flex items-center gap-2">
+                        <Wallet className="h-4 w-4" />
+                        Manage
+                        <ExternalLink className="h-3 w-3" />
+                      </NextLink>
+                    </Button>
                   </div>
-                  <Button variant="neutral" size="sm">
-                    Enable
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Danger Zone */}
-            <Card className="border-red-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-600">
-                  <Trash2 className="h-5 w-5" />
-                  Danger Zone
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 border border-red-200 rounded-base bg-red-50">
-                  <h3 className="font-heading text-red-800 mb-2">
-                    Delete Account
-                  </h3>
-                  <p className="text-sm text-red-600 mb-4">
-                    Once you delete your account, there is no going back. Please
-                    be certain.
-                  </p>
-                  <Button
-                    variant="neutral"
-                    className="border-red-500 text-red-600 hover:bg-red-50"
-                  >
-                    Delete Account
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Other Tabs - Coming Soon */}
+            {(activeTab === "security" || activeTab === "notifications" || activeTab === "appearance" || activeTab === "domains") && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {activeTab === "security" && <Shield className="h-5 w-5" />}
+                    {activeTab === "notifications" && <Bell className="h-5 w-5" />}
+                    {activeTab === "appearance" && <Palette className="h-5 w-5" />}
+                    {activeTab === "domains" && <Link className="h-5 w-5" />}
+                    {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12 text-foreground/60">
+                    <div className="text-6xl mb-4">🚧</div>
+                    <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
+                    <p>This settings section is under development.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Danger Zone - Add to Security tab later */}
           </div>
         </div>
       </div>

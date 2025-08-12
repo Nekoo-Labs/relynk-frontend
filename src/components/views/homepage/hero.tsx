@@ -24,35 +24,22 @@ import {
 } from "lucide-react";
 import { motion, useTransform, useInView, useScroll } from "motion/react";
 import { useRef } from "react";
-import { useAccount } from "wagmi";
+
 import { ConnectButton } from "@xellar/kit";
 import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll();
-  const { isConnected } = useAccount();
+
   const router = useRouter();
+
 
   const heroInView = useInView(heroRef, { once: true, margin: "-100px" });
 
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
-  const handleCreateLinkClick = () => {
-    if (isConnected) {
-      router.push("/dashboard/links/create");
-    } else {
-      // Will be handled by ConnectButton.Custom
-    }
-  };
 
-  const handleDashboardClick = () => {
-    if (isConnected) {
-      router.push("/dashboard");
-    } else {
-      // Will be handled by ConnectButton.Custom
-    }
-  };
 
   return (
     <section className="relative min-h-[600px] lg:min-h-[700px] flex flex-col pt-[calc(4rem+40px)] pb-20 items-center overflow-hidden">
@@ -177,7 +164,7 @@ export default function HeroSection() {
                         className="text-xs text-gray-500 p-2 bg-gray-100/50 rounded-md block w-full"
                         whileHover={{ backgroundColor: "rgb(243 244 246)" }}
                       >
-                        relynk.app/template123
+                        rely.ink/template123
                       </motion.code>
                     </div>
                   </div>
@@ -216,7 +203,7 @@ export default function HeroSection() {
                         Tip: Any amount
                       </p>
                       <code className="text-xs text-gray-500 p-3 bg-gray-100/50 rounded-md block">
-                        relynk.app/tip456
+                        rely.ink/tip456
                       </code>
                     </div>
                   </div>
@@ -254,7 +241,7 @@ export default function HeroSection() {
                         Tip: Any amount
                       </p>
                       <code className="text-xs text-gray-500 p-3 bg-gray-100/50 rounded-md block">
-                        relynk.app/tip456
+                        rely.ink/tip456
                       </code>
                     </div>
                   </div>
