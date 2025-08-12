@@ -11,6 +11,7 @@ import { useSiweAuth } from "@/hooks/use-siwe-auth";
 import { Button } from "@/components/ui/button";
 import { SwitchNetwork } from "@/components/ui/switch-network";
 import { LogOut, User } from "lucide-react";
+import DashboardHeaderSheet from "./dashboard-header-sheet";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -32,9 +33,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 Dashboard
               </h1>
             </div>
-
+            <DashboardHeaderSheet address={address} logout={logout} />
             {/* Network Switch, User Info and Logout */}
-            <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-3">
               <SwitchNetwork variant="neutral" size="sm" />
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-base bg-secondary-background/50 border border-border">
                 <User className="h-4 w-4 text-foreground/60" />

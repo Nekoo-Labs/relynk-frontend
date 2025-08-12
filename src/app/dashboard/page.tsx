@@ -58,7 +58,9 @@ function DashboardContent() {
             <p className="text-foreground/60 text-center">
               {loadingProfile
                 ? "Checking your profile..."
-                : "Loading analytics..."}
+                : loadingAnalytics
+                ? "Loading analytics..."
+                : "Ready to track your links! 🔍"}
             </p>
           </CardContent>
         </Card>
@@ -78,7 +80,7 @@ function DashboardContent() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-y-2 items-center justify-between">
           <div className="float-animation">
             <h1 className="text-3xl font-heading text-foreground">
               💖 Welcome back, cutie!
@@ -87,21 +89,28 @@ function DashboardContent() {
               Here&apos;s what&apos;s happening with your links today~ ✨
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {hasProfile && (
-              <Link href={`/${username}`} target="_blank">
-                <Button variant="outline" className="flex items-center gap-2">
+              <Button
+                asChild
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Link href={`/${username}`} target="_blank">
                   <ExternalLink className="h-4 w-4" />
                   View Profile
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             )}
-            <Link href="/dashboard/links/create">
-              <Button className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow glow-hover hover:scale-105 transition-all duration-300">
+            <Button
+              asChild
+              className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow glow-hover hover:scale-105 transition-all duration-300"
+            >
+              <Link href="/dashboard/links/create">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Link
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
 
@@ -119,7 +128,7 @@ function DashboardContent() {
 
         {/* Profile Status Badge */}
         {hasProfile && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="default" className="flex items-center gap-1">
               <User className="w-3 h-3" />
               Profile Active: @{username}
