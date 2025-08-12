@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAccount, useBalance } from "wagmi";
-import { formatEther, parseEther, parseUnits, formatUnits } from "viem";
+import { useState, useEffect, useCallback } from "react";
+import { useAccount, useBalance, useChainId } from "wagmi";
+import { parseUnits, formatUnits } from "viem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRelynkProcessor } from "@/hooks/use-relynk-processor";
 import { useProfileRegistry } from "@/hooks/use-profile-registry";
 import { useTokenApproval } from "@/hooks/use-token-approval";
@@ -27,7 +27,7 @@ import {
   UsageType,
   PaymentRequest,
 } from "@/types/relynk";
-import { SUPPORTED_TOKENS } from "@/lib/contracts";
+import { getTokenConfig } from "@/lib/contracts";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -53,6 +53,7 @@ export function PaymentProcessor({
   onError,
 }: PaymentProcessorProps) {
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
   const {
     processPayment,
     processDonation,
@@ -69,7 +70,7 @@ export function PaymentProcessor({
   const {
     useTokenAllowance,
     needsApproval,
-    approveToken,
+    approveToken: _approveToken,
     approveMax,
     isApproving,
     isSuccess: approvalSuccess,
@@ -81,7 +82,7 @@ export function PaymentProcessor({
   const [needsTokenApproval, setNeedsTokenApproval] = useState(false);
 
   // Get creator profile
-  const { data: creatorProfile } = useGetProfile(paymentLink.creator);
+  const { data: _creatorProfile } = useGetProfile(paymentLink.creator);
 
   // Check if link is already used (for single-use links)
   const { data: isLinkUsed } = useIsLinkUsed(paymentLink.id);
@@ -106,13 +107,22 @@ export function PaymentProcessor({
     }
   }, [isSuccess, hash, onSuccess]);
 
+  // Get amount to charge function
+  const getAmountToCharge = useCallback(() => {
+    const decimals = getTokenDecimals(paymentLink.tokenSymbol);
+    if (paymentLink.amountType === AmountType.DYNAMIC && customAmount) {
+      return parseUnits(customAmount, decimals);
+    }
+    return parseUnits(paymentLink.amount, decimals);
+  }, [paymentLink.tokenSymbol, paymentLink.amountType, paymentLink.amount, customAmount]);
+
   // Check if approval is needed when amount or allowance changes
   useEffect(() => {
     if (currentAllowance !== undefined && address) {
       const amountToCharge = getAmountToCharge();
       setNeedsTokenApproval(needsApproval(currentAllowance, amountToCharge));
     }
-  }, [currentAllowance, customAmount, paymentLink.amount, address]);
+  }, [currentAllowance, customAmount, paymentLink.amount, address, getAmountToCharge, needsApproval]);
 
   // Handle successful approval
   useEffect(() => {
@@ -156,19 +166,14 @@ export function PaymentProcessor({
 
   // Get token decimals for proper amount parsing
   const getTokenDecimals = (tokenSymbol: string): number => {
-    const token = Object.values(SUPPORTED_TOKENS).find(
+    const supportedTokens = getTokenConfig(chainId);
+    const token = Object.values(supportedTokens).find(
       (t) => t.symbol === tokenSymbol
     );
     return token?.decimals || 18; // Default to 18 decimals if not found
   };
 
-  const getAmountToCharge = () => {
-    const decimals = getTokenDecimals(paymentLink.tokenSymbol);
-    if (paymentLink.amountType === AmountType.DYNAMIC && customAmount) {
-      return parseUnits(customAmount, decimals);
-    }
-    return parseUnits(paymentLink.amount, decimals);
-  };
+
 
   const handleApproval = async () => {
     if (!isConnected || !address) {
@@ -176,7 +181,7 @@ export function PaymentProcessor({
       return;
     }
 
-    const amountToCharge = getAmountToCharge();
+    const _amountToCharge = getAmountToCharge();
     const result = await approveMax(paymentLink.token);
 
     if (!result.success) {
@@ -218,7 +223,7 @@ export function PaymentProcessor({
 
     try {
       // Create payment request
-      const decimals = getTokenDecimals(paymentLink.tokenSymbol);
+      const _decimals = getTokenDecimals(paymentLink.tokenSymbol);
       const paymentRequest: PaymentRequest = {
         linkData: paymentLink.originalLinkData, // Use the exact linkData that was signed
         signature: paymentLink.signature, // Use the stored signature from link creation

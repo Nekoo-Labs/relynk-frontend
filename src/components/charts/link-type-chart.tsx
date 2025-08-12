@@ -6,14 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Users, CreditCard, Gift, Package, FileText } from "lucide-react";
 import { LinkType } from "@/types/relynk";
 
-interface LinkTypeData {
-  type: LinkType;
-  count: number;
-  percentage: number;
-  color: string;
-  icon: React.ReactNode;
-  label: string;
-}
+// interface LinkTypeData {
+//   type: LinkType;
+//   count: number;
+//   percentage: number;
+//   color: string;
+//   icon: React.ReactNode;
+//   label: string;
+// }
 
 interface LinkTypeChartProps {
   linksByType: Record<LinkType, number>;

@@ -46,8 +46,11 @@ export default function CreateLinkPage() {
           </div>
         </div>
 
-  {/* Create Link Form (type is chosen before entering this page) */}
-  <CreateLinkForm onSuccess={handleSuccess} initialLinkType={initialLinkType} />
+        {/* Create Link Form (type is chosen before entering this page) */}
+        <CreateLinkForm
+          onSuccess={handleSuccess}
+          initialLinkType={initialLinkType}
+        />
       </div>
     </DashboardLayout>
   );

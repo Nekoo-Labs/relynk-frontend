@@ -41,8 +41,7 @@ export default function ProfilePage() {
     usePaymentLinks(address!);
 
   // Get analytics data
-  const { stats: analyticsData, isLoading: isLoadingAnalytics } =
-    useAnalytics();
+  const { stats: analyticsData } = useAnalytics();
 
   // Use stable loading to prevent flashing
   const stableLoading = useStableLoading(isConnecting || isLoadingProfile, 500);
@@ -72,7 +71,7 @@ export default function ProfilePage() {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap gap-y-2 items-center justify-between">
             <div>
               <h1 className="text-3xl font-heading text-foreground">
                 ✨ Edit Profile
@@ -96,7 +95,7 @@ export default function ProfilePage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-y-2 items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading text-foreground">
               👤 Your Profile
@@ -237,7 +236,7 @@ export default function ProfilePage() {
         {/* Payment Links Management */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex flex-wrap gap-y-4 items-center justify-between">
               <span className="flex items-center gap-2">
                 🔗 Your Payment Links
               </span>
@@ -261,9 +260,9 @@ export default function ProfilePage() {
                   .map((link) => (
                     <div
                       key={link.id}
-                      className="flex items-center justify-between p-4 border border-border rounded-base bg-secondary-background"
+                      className="flex flex-col sm:flex-row gap-y-4 items-center justify-between p-4 border border-border rounded-base bg-secondary-background"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row items-center text-center sm:text-start gap-3">
                         <Badge
                           variant={link.isActive ? "default" : "secondary"}
                         >

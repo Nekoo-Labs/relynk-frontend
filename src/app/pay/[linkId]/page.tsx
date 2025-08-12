@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { PaymentProcessor } from "@/components/payment/payment-processor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PaymentLink, LinkType, AmountType, UsageType } from "@/types/relynk";
+import { PaymentLink } from "@/types/relynk";
 import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 

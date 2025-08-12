@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -59,7 +60,7 @@ export function ProfileDisplay({
   isOwner = false,
 }: ProfileDisplayProps) {
   const [copied, setCopied] = useState(false);
-  const [clickedLinks, setClickedLinks] = useState<Set<string>>(new Set());
+  const [_clickedLinks, setClickedLinks] = useState<Set<string>>(new Set());
 
   const profileUrl = `${
     typeof window !== "undefined" ? window.location.origin : ""
@@ -92,7 +93,7 @@ export function ProfileDisplay({
   };
 
   const getButtonStyle = () => {
-    const { buttonStyle, accentColor } = profileData.theme || {
+    const { buttonStyle, accentColor: _accentColor } = profileData.theme || {
       buttonStyle: "rounded",
       accentColor: "#3b82f6",
     };
@@ -115,7 +116,7 @@ export function ProfileDisplay({
 
   const activeSocialLinks = Object.entries(
     profileData.socialLinks || {}
-  ).filter(([_, url]) => url && url.trim() !== "");
+  ).filter(([_key, url]) => url && url.trim() !== "");
 
   return (
     <div
@@ -132,10 +133,12 @@ export function ProfileDisplay({
           <div className="flex justify-center">
             <Avatar className="w-24 h-24">
               {profileData.avatar ? (
-                <img
+                <Image
                   src={profileData.avatar}
                   alt={profileData.name}
-                  className="w-full h-full object-cover"
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover rounded-full"
                 />
               ) : (
                 <div

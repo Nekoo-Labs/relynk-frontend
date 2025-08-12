@@ -10,9 +10,6 @@ import {
 } from "wagmi";
 import { Address } from "viem";
 import {
-  Profile,
-  ProfileFeeConfig,
-  CreatorEarnings,
   ProfileData,
 } from "@/types/profile";
 import { ProfileIPFSService } from "@/lib/profile-ipfs-service";
@@ -184,6 +181,8 @@ export function useProfileRegistry() {
       args: [token, amount],
     });
   };
+
+  // Note: Admin functions removed for security - end users should not have access to these
 
   return {
     // Read hooks

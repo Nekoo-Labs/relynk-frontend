@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
-import { processorClient } from "@/services/graphql";
+import { useAccount, useChainId } from "wagmi";
+import { useProcessorClient } from "@/services/graphql";
 import { formatUnits } from "viem";
-import { SUPPORTED_TOKENS } from "@/lib/contracts";
+import { getTokenConfig } from "@/lib/contracts";
 
 // GraphQL Queries
 const GET_USER_PAYMENTS = `
@@ -115,9 +115,12 @@ export interface PaymentStats {
 
 export function usePayments() {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const processorClient = useProcessorClient();
 
   const getTokenInfo = (tokenAddress: string) => {
-    const token = Object.values(SUPPORTED_TOKENS).find(
+    const tokens = getTokenConfig(chainId);
+    const token = Object.values(tokens).find(
       (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
     );
     return token || { symbol: "UNKNOWN", decimals: 18 };
@@ -129,11 +132,60 @@ export function usePayments() {
     return parseFloat(formatted).toFixed(2);
   };
 
-  const processPaymentData = (data: any): PaymentTransaction[] => {
+  const processPaymentData = (data: {
+    received?: Array<{
+      id: string;
+      amount: string;
+      token: string;
+      payer: string;
+      creator: string;
+      transactionHash_: string;
+      timestamp_: string;
+      linkId: string;
+      linkTitle: string;
+      linkType: string;
+    }>;
+    sent?: Array<{
+      id: string;
+      amount: string;
+      token: string;
+      payer: string;
+      creator: string;
+      transactionHash_: string;
+      timestamp_: string;
+      linkId: string;
+      linkTitle: string;
+      linkType: string;
+    }>;
+    donationsReceived?: Array<{
+      id: string;
+      amount: string;
+      token: string;
+      payer: string;
+      creator: string;
+      transactionHash_: string;
+      timestamp_: string;
+      linkId: string;
+      linkTitle: string;
+      message?: string;
+    }>;
+    donationsSent?: Array<{
+      id: string;
+      amount: string;
+      token: string;
+      payer: string;
+      creator: string;
+      transactionHash_: string;
+      timestamp_: string;
+      linkId: string;
+      linkTitle: string;
+      message?: string;
+    }>;
+  }): PaymentTransaction[] => {
     const transactions: PaymentTransaction[] = [];
 
     // Process received payments
-    data.received?.forEach((payment: any) => {
+    data.received?.forEach((payment) => {
       const token = getTokenInfo(payment.token);
       const formattedAmount = formatTokenAmount(payment.amount, payment.token);
 
@@ -152,12 +204,12 @@ export function usePayments() {
         ).toLocaleString(),
         linkTitle: `Payment Link ${payment.linkId.slice(-8)}`,
         linkId: payment.linkId,
-        linkType: payment.linkType,
+        linkType: parseInt(payment.linkType) || 0,
       });
     });
 
     // Process sent payments
-    data.sent?.forEach((payment: any) => {
+    data.sent?.forEach((payment) => {
       const token = getTokenInfo(payment.token);
       const formattedAmount = formatTokenAmount(payment.amount, payment.token);
 
@@ -176,12 +228,12 @@ export function usePayments() {
         ).toLocaleString(),
         linkTitle: `Payment Link ${payment.linkId.slice(-8)}`,
         linkId: payment.linkId,
-        linkType: payment.linkType,
+        linkType: parseInt(payment.linkType) || 0,
       });
     });
 
     // Process received donations
-    data.donationsReceived?.forEach((donation: any) => {
+    data.donationsReceived?.forEach((donation) => {
       const token = getTokenInfo(donation.token);
       const formattedAmount = formatTokenAmount(
         donation.amount,
@@ -194,7 +246,7 @@ export function usePayments() {
         amount: `$${formattedAmount}`,
         formattedAmount,
         currency: token.symbol,
-        from: donation.donor,
+        from: donation.payer,
         to: donation.creator,
         status: "completed",
         txHash: donation.transactionHash_,
@@ -208,7 +260,7 @@ export function usePayments() {
     });
 
     // Process sent donations
-    data.donationsSent?.forEach((donation: any) => {
+    data.donationsSent?.forEach((donation) => {
       const token = getTokenInfo(donation.token);
       const formattedAmount = formatTokenAmount(
         donation.amount,
@@ -221,7 +273,7 @@ export function usePayments() {
         amount: `$${formattedAmount}`,
         formattedAmount,
         currency: token.symbol,
-        from: donation.donor,
+        from: donation.payer,
         to: donation.creator,
         status: "completed",
         txHash: donation.transactionHash_,
@@ -279,7 +331,7 @@ export function usePayments() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["payments", address],
+    queryKey: ["payments", address, chainId],
     queryFn: async () => {
       if (!address) {
         return {
@@ -299,7 +351,7 @@ export function usePayments() {
         first: 100, // Fetch last 100 transactions
       });
 
-      const processedPayments = processPaymentData(data);
+      const processedPayments = processPaymentData(data as Parameters<typeof processPaymentData>[0]);
       const calculatedStats = calculateStats(processedPayments);
 
       return {

@@ -58,7 +58,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
         <div className="space-y-4">
           {/* Simple Bar Chart */}
           <div className="flex items-end justify-between h-32 gap-2">
-            {data.map((item, index) => {
+            {data.map((item, _index) => {
               const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
               return (
                 <div key={item.month} className="flex flex-col items-center gap-2 flex-1">

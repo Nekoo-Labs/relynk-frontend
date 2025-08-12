@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { StatCard } from "@/components/ui/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DashboardWelcomeCard } from "@/components/dashboard-welcome-card";
@@ -21,18 +21,16 @@ import {
   useTopPerformingLinks,
 } from "@/hooks/use-analytics";
 import {
-  BarChart3,
   CreditCard,
   Link as LinkIcon,
   MousePointer,
   Plus,
   TrendingUp,
-  Users,
   User,
   ExternalLink,
-  Sparkles,
 } from "lucide-react";
 import { Suspense } from "react";
+import CreateLinkLauncher from "@/components/payment/create-link-launcher";
 
 function DashboardContent() {
   const { address } = useAccount();
@@ -61,7 +59,9 @@ function DashboardContent() {
             <p className="text-foreground/60 text-center">
               {loadingProfile
                 ? "Checking your profile..."
-                : "Loading analytics..."}
+                : loadingAnalytics
+                ? "Loading analytics..."
+                : "Ready to track your links! 🔍"}
             </p>
           </CardContent>
         </Card>
@@ -81,7 +81,7 @@ function DashboardContent() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-y-2 items-center justify-between">
           <div className="float-animation">
             <h1 className="text-3xl font-heading text-foreground">
               💖 Welcome back, cutie!
@@ -90,21 +90,20 @@ function DashboardContent() {
               Here&apos;s what&apos;s happening with your links today~ ✨
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {hasProfile && (
-              <Link href={`/${username}`} target="_blank">
-                <Button variant="outline" className="flex items-center gap-2">
+              <Button
+                asChild
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Link href={`/${username}`} target="_blank">
                   <ExternalLink className="h-4 w-4" />
                   View Profile
-                </Button>
-              </Link>
-            )}
-            <Link href="/dashboard/links/create">
-              <Button className="bg-main text-main-foreground hover:bg-main/90 shadow-shadow glow-hover hover:scale-105 transition-all duration-300">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Link
+                </Link>
               </Button>
-            </Link>
+            )}
+            <CreateLinkLauncher />
           </div>
         </div>
 
@@ -122,7 +121,7 @@ function DashboardContent() {
 
         {/* Profile Status Badge */}
         {hasProfile && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="default" className="flex items-center gap-1">
               <User className="w-3 h-3" />
               Profile Active: @{username}

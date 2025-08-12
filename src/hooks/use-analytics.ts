@@ -30,7 +30,7 @@ function formatTokenAmount(amount: string, tokenAddress: string): string {
 }
 
 // Helper function to get token symbol
-function getTokenSymbol(tokenAddress: string): string {
+function _getTokenSymbol(tokenAddress: string): string {
   const token = SUPPORTED_TOKENS_ARRAY.find(
     (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
   );
@@ -73,7 +73,7 @@ export function useAnalytics() {
     queryFn: () => (address ? fetchCreatorAnalytics(address) : null),
     enabled: !!address,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds
+    // refetchInterval: 30 * 1000, // Removed annoying auto refetch every 30 seconds
   });
 
   const analytics = useMemo(() => {
@@ -125,7 +125,7 @@ function calculateCreatorStats(
   links: PaymentLink[],
   creator: Address
 ): CreatorStats {
-  const now = new Date();
+  const _now = new Date();
   const activeLinks = links.filter(
     (link) =>
       link.isActive && !link.isExpired && (!link.isUsed || link.usageType !== 0) // ONE_TIME = 0
@@ -462,7 +462,7 @@ export function useTopPerformingLinks(limit: number = 5) {
 /**
  * Hook to get revenue trends
  */
-export function useRevenueTrends(timeRange: "7d" | "30d" | "90d" = "30d") {
+export function useRevenueTrends(_timeRange: "7d" | "30d" | "90d" = "30d") {
   const { stats } = useAnalytics();
 
   return useMemo(() => {

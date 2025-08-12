@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { LinkType, AmountType, UsageType } from "@/types/relynk";
-import { isAddress } from "viem";
+
 
 // Zod schema for link creation form that aligns with smart contract types
 export const linkFormSchema = z
@@ -224,7 +224,7 @@ export type LinkFormUIData = z.infer<typeof linkFormUISchema>;
 // Helper function to transform UI data to contract data
 export function transformUIDataToContractData(
   uiData: LinkFormUIData,
-  tokenAddress: `0x${string}`
+  _tokenAddress: `0x${string}`
 ): Omit<LinkFormData, "expiresIn"> & { expiresIn: number } {
   const linkTypeMap = {
     payment: LinkType.PAYMENT,
