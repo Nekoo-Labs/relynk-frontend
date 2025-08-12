@@ -2,7 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 // Base API configuration
 export const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "",
   timeout: 30000,
   retries: 3,
 } as const;
@@ -34,6 +34,8 @@ export interface ApiRequestConfig extends Omit<RequestInit, "method"> {
   baseURL?: string;
   params?: Record<string, string | number | boolean>;
   skipAuth?: boolean;
+  // New option to force using relative paths
+  useRelativePath?: boolean;
 }
 
 // Custom error class for API errors
@@ -56,12 +58,36 @@ export class ApiRequestError extends Error {
   }
 }
 
+// Check if we're running in the browser
+function isBrowser(): boolean {
+  return typeof window !== "undefined";
+}
+
 // Utility function to build URL with query parameters
 function buildUrl(
   baseUrl: string,
   endpoint: string,
-  params?: Record<string, string | number | boolean>
+  params?: Record<string, string | number | boolean>,
+  useRelativePath = false
 ): string {
+  // If we want relative path and we're in the browser, use relative URL
+  if (useRelativePath && isBrowser()) {
+    // Ensure endpoint starts with /
+    const relativePath = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+    if (params) {
+      const url = new URL(relativePath, window.location.origin);
+      Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.append(key, String(value));
+      });
+      // Return just the pathname and search, not the full URL
+      return url.pathname + url.search;
+    }
+
+    return relativePath;
+  }
+
+  // For absolute URLs or server-side, use the original logic
   const url = new URL(
     endpoint.startsWith("/") ? endpoint.slice(1) : endpoint,
     baseUrl
@@ -108,6 +134,24 @@ async function getAuthToken(): Promise<string | null> {
   return null;
 }
 
+// Determine if we should use relative path
+function shouldUseRelativePath(
+  endpoint: string,
+  config: ApiRequestConfig
+): boolean {
+  // If explicitly set, use that
+  if (config.useRelativePath !== undefined) {
+    return config.useRelativePath;
+  }
+
+  // Auto-detect: use relative path if we're in browser and endpoint looks like a Next.js API route
+  if (isBrowser() && endpoint.startsWith("/api/")) {
+    return true;
+  }
+
+  return false;
+}
+
 // Main API fetch function
 export async function apiFetch<T = unknown>(
   endpoint: string,
@@ -121,10 +165,14 @@ export async function apiFetch<T = unknown>(
     params,
     skipAuth = false,
     headers: customHeaders = {},
+    useRelativePath,
     ...fetchOptions
   } = options;
 
-  const url = buildUrl(baseURL, endpoint, params);
+  // Determine whether to use relative path
+  const useRelative = shouldUseRelativePath(endpoint, { useRelativePath });
+
+  const url = buildUrl(baseURL, endpoint, params, useRelative);
 
   // Prepare headers
   const headers: Record<string, string> = {
@@ -249,26 +297,43 @@ export async function apiFetch<T = unknown>(
 
 // Convenience methods for different HTTP verbs
 export const api = {
-  get: <T = unknown>(endpoint: string, config?: Omit<ApiRequestConfig, "method">) =>
-    apiFetch<T>(endpoint, { ...config, method: "GET" }),
+  get: <T = unknown>(
+    endpoint: string,
+    config?: Omit<ApiRequestConfig, "method">
+  ) => apiFetch<T>(endpoint, { ...config, method: "GET" }),
 
   post: <T = unknown>(
     endpoint: string,
     data?: Record<string, unknown>,
     config?: Omit<ApiRequestConfig, "method">
-  ) => apiFetch<T>(endpoint, { ...config, method: "POST", body: data as unknown as BodyInit }),
+  ) =>
+    apiFetch<T>(endpoint, {
+      ...config,
+      method: "POST",
+      body: data as unknown as BodyInit,
+    }),
 
   put: <T = unknown>(
     endpoint: string,
     data?: Record<string, unknown>,
     config?: Omit<ApiRequestConfig, "method">
-  ) => apiFetch<T>(endpoint, { ...config, method: "PUT", body: data as unknown as BodyInit }),
+  ) =>
+    apiFetch<T>(endpoint, {
+      ...config,
+      method: "PUT",
+      body: data as unknown as BodyInit,
+    }),
 
   patch: <T = unknown>(
     endpoint: string,
     data?: Record<string, unknown>,
     config?: Omit<ApiRequestConfig, "method">
-  ) => apiFetch<T>(endpoint, { ...config, method: "PATCH", body: data as unknown as BodyInit }),
+  ) =>
+    apiFetch<T>(endpoint, {
+      ...config,
+      method: "PATCH",
+      body: data as unknown as BodyInit,
+    }),
 
   delete: <T = unknown>(
     endpoint: string,
