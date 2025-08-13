@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRelynkProcessor } from "@/hooks/use-relynk-processor";
 import { useProfileRegistry } from "@/hooks/use-profile-registry";
 import { useTokenApproval } from "@/hooks/use-token-approval";
+import { NetworkSelector } from "./network-selector";
 import {
   PaymentLink,
   LinkType,
@@ -28,7 +29,9 @@ import {
   PaymentRequest,
 } from "@/types/relynk";
 import { getTokenConfig } from "@/lib/contracts";
+import { normalizeNumberForParseUnits } from "@/lib/utils";
 import { toast } from "sonner";
+import { invalidatePaymentRelatedCaches } from "@/services/api";
 import {
   Loader2,
   CreditCard,
@@ -38,6 +41,8 @@ import {
   ExternalLink,
   CheckCircle,
   WalletCards,
+  AlertTriangle,
+  Network,
 } from "lucide-react";
 import ConnectWallet from "../ui/connect-wallet";
 
@@ -54,6 +59,12 @@ export function PaymentProcessor({
 }: PaymentProcessorProps) {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+
+  // Debug logging
+  console.log("PaymentProcessor - Payment Link:", paymentLink);
+  console.log("PaymentProcessor - Current Chain ID:", chainId);
+  console.log("PaymentProcessor - Token Symbol:", paymentLink.tokenSymbol);
+  console.log("PaymentProcessor - Token Address:", paymentLink.token);
   const {
     processPayment,
     processDonation,
@@ -70,8 +81,8 @@ export function PaymentProcessor({
   const {
     useTokenAllowance,
     needsApproval,
-    approveToken: _approveToken,
     approveMax,
+    getApprovalState,
     isApproving,
     isSuccess: approvalSuccess,
   } = useTokenApproval();
@@ -80,6 +91,8 @@ export function PaymentProcessor({
   const [message, setMessage] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
   const [needsTokenApproval, setNeedsTokenApproval] = useState(false);
+  const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+  const [paymentStep, setPaymentStep] = useState<'idle' | 'approving' | 'processing' | 'confirming' | 'completed'>('idle');
 
   // Get creator profile
   const { data: _creatorProfile } = useGetProfile(paymentLink.creator);
@@ -87,33 +100,70 @@ export function PaymentProcessor({
   // Check if link is already used (for single-use links)
   const { data: isLinkUsed } = useIsLinkUsed(paymentLink.id);
 
-  // Get user's token balance
+  // Get the correct token address for the current chain
+  const getCurrentChainTokenAddress = useCallback(() => {
+    const supportedTokens = getTokenConfig(chainId);
+    const token = Object.values(supportedTokens).find(
+      (t) => t.symbol === paymentLink.tokenSymbol
+    );
+    return token?.address || paymentLink.token; // Fallback to original if not found
+  }, [chainId, paymentLink.tokenSymbol, paymentLink.token]);
+
+  const currentChainTokenAddress = getCurrentChainTokenAddress();
+
+  // Get user's token balance for current chain
   const { data: balance } = useBalance({
     address,
     token:
-      paymentLink.token === "0x0000000000000000000000000000000000000000"
+      currentChainTokenAddress === "0x0000000000000000000000000000000000000000"
         ? undefined
-        : paymentLink.token,
+        : currentChainTokenAddress,
+    chainId,
   });
 
-  // Get current token allowance
-  const { data: currentAllowance } = useTokenAllowance(paymentLink.token);
+  // Get current token allowance for the current chain
+  const { data: currentAllowance } = useTokenAllowance(currentChainTokenAddress, chainId);
 
   useEffect(() => {
     if (isSuccess && hash) {
       setIsCompleted(true);
+      setPaymentStep('completed');
       onSuccess?.(hash);
       toast.success("Payment completed successfully!");
+
+      // Invalidate payment-related caches for real-time updates
+      if (address) {
+        setTimeout(() => {
+          invalidatePaymentRelatedCaches(address);
+        }, 2000); // Wait 2 seconds for blockchain to update
+      }
     }
-  }, [isSuccess, hash, onSuccess]);
+  }, [isSuccess, hash, onSuccess, address]);
+
+  // Handle approval success
+  useEffect(() => {
+    if (approvalSuccess) {
+      setNeedsTokenApproval(false);
+      setPaymentStep('idle');
+      toast.success("Token approval successful! You can now proceed with payment.");
+    }
+  }, [approvalSuccess]);
 
   // Get amount to charge function
   const getAmountToCharge = useCallback(() => {
     const decimals = getTokenDecimals(paymentLink.tokenSymbol);
-    if (paymentLink.amountType === AmountType.DYNAMIC && customAmount) {
-      return parseUnits(customAmount, decimals);
+    try {
+      if (paymentLink.amountType === AmountType.DYNAMIC && customAmount) {
+        const normalizedAmount = normalizeNumberForParseUnits(customAmount);
+        return parseUnits(normalizedAmount, decimals);
+      }
+      const normalizedAmount = normalizeNumberForParseUnits(paymentLink.amount);
+      return parseUnits(normalizedAmount, decimals);
+    } catch (error) {
+      console.error('Error parsing amount:', error);
+      // Return 0 as fallback to prevent crashes
+      return BigInt(0);
     }
-    return parseUnits(paymentLink.amount, decimals);
   }, [paymentLink.tokenSymbol, paymentLink.amountType, paymentLink.amount, customAmount]);
 
   // Check if approval is needed when amount or allowance changes
@@ -122,17 +172,19 @@ export function PaymentProcessor({
       const amountToCharge = getAmountToCharge();
       setNeedsTokenApproval(needsApproval(currentAllowance, amountToCharge));
     }
-  }, [currentAllowance, customAmount, paymentLink.amount, address, getAmountToCharge, needsApproval]);
+  }, [currentAllowance, customAmount, paymentLink.amount, address, getAmountToCharge, needsApproval, chainId]);
 
-  // Handle successful approval
+  // Reset approval state when chain changes
   useEffect(() => {
-    if (approvalSuccess) {
-      setNeedsTokenApproval(false);
-      toast.success(
-        "Token approval successful! You can now proceed with payment."
-      );
+    setPaymentStep('idle');
+    // Force re-check of approval when chain changes
+    if (currentAllowance !== undefined && address) {
+      const amountToCharge = getAmountToCharge();
+      setNeedsTokenApproval(needsApproval(currentAllowance, amountToCharge));
     }
-  }, [approvalSuccess]);
+  }, [chainId, currentAllowance, address, getAmountToCharge, needsApproval]);
+
+
 
   const getIcon = () => {
     switch (paymentLink.linkType) {
@@ -175,17 +227,62 @@ export function PaymentProcessor({
 
 
 
+  // Helper to detect user cancellation
+  const isUserRejection = useCallback((error: any): boolean => {
+    if (!error) return false;
+
+    const errorMessage = error.message || error.toString();
+    const rejectionPatterns = [
+      'user rejected',
+      'user denied',
+      'user cancelled',
+      'user canceled',
+      'rejected by user',
+      'denied by user',
+      'cancelled by user',
+      'canceled by user',
+      'transaction was rejected',
+      'transaction rejected',
+      'user rejected the request',
+      'user rejected transaction',
+      'ACTION_REJECTED',
+      'UNAUTHORIZED',
+      'User rejected',
+      'User denied',
+    ];
+
+    return rejectionPatterns.some(pattern =>
+      errorMessage.toLowerCase().includes(pattern.toLowerCase())
+    );
+  }, []);
+
   const handleApproval = async () => {
     if (!isConnected || !address) {
       toast.error("Please connect your wallet");
       return;
     }
 
-    const _amountToCharge = getAmountToCharge();
-    const result = await approveMax(paymentLink.token);
+    setPaymentStep('approving');
 
-    if (!result.success) {
-      toast.error(result.error || "Token approval failed");
+    try {
+      const result = await approveMax(currentChainTokenAddress, chainId);
+
+      if (!result.success) {
+        if (isUserRejection(result.error)) {
+          toast.error("Transaction was canceled by user");
+        } else {
+          toast.error(result.error || "Token approval failed");
+        }
+        setPaymentStep('idle');
+      }
+    } catch (error) {
+      console.error("Approval error:", error);
+      if (isUserRejection(error)) {
+        toast.error("Transaction was canceled by user");
+      } else {
+        toast.error("Token approval failed");
+      }
+      setPaymentStep('idle');
     }
   };
 
@@ -221,11 +318,17 @@ export function PaymentProcessor({
       return;
     }
 
+    setPaymentStep('processing');
+
     try {
-      // Create payment request
-      const _decimals = getTokenDecimals(paymentLink.tokenSymbol);
+      // Create payment request with updated token address for current chain
+      const updatedLinkData = {
+        ...paymentLink.originalLinkData,
+        token: currentChainTokenAddress, // Use the correct token address for current chain
+      };
+
       const paymentRequest: PaymentRequest = {
-        linkData: paymentLink.originalLinkData, // Use the exact linkData that was signed
+        linkData: updatedLinkData,
         signature: paymentLink.signature, // Use the stored signature from link creation
         message: message,
         customAmount:
@@ -254,17 +357,45 @@ export function PaymentProcessor({
       }
 
       if (!result.success) {
+        if (isUserRejection(result.error)) {
+          toast.error("Transaction was canceled by user");
+        } else {
+          toast.error(result.error || "Payment failed");
+        }
         onError?.(result.error || "Payment failed");
-        toast.error(result.error || "Payment failed");
+        setPaymentStep('idle');
+      } else {
+        setPaymentStep('confirming');
       }
     } catch (error) {
       console.error("Payment error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Payment failed";
-      onError?.(errorMessage);
-      toast.error(errorMessage);
+
+      if (isUserRejection(error)) {
+        toast.error("Transaction was canceled by user");
+      } else {
+        const errorMessage = error instanceof Error ? error.message : "Payment failed";
+        toast.error(errorMessage);
+        onError?.(errorMessage);
+      }
+
+      setPaymentStep('idle');
     }
   };
+
+  // Check if token is supported on current chain
+  const isTokenSupportedOnCurrentChain = useCallback(() => {
+    const supportedTokens = getTokenConfig(chainId);
+    console.log("Checking token support - Chain ID:", chainId);
+    console.log("Checking token support - Supported tokens:", supportedTokens);
+    console.log("Checking token support - Looking for symbol:", paymentLink.tokenSymbol);
+
+    const isSupported = Object.values(supportedTokens).some(
+      (t) => t.symbol === paymentLink.tokenSymbol
+    );
+    console.log("Checking token support - Is supported:", isSupported);
+
+    return isSupported;
+  }, [chainId, paymentLink.tokenSymbol]);
 
   // Check if link is expired
   const isExpired = paymentLink.expires.getTime() < Date.now();
@@ -338,6 +469,51 @@ export function PaymentProcessor({
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (!isTokenSupportedOnCurrentChain()) {
+    return (
+      <div className="w-full max-w-md mx-auto space-y-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="text-muted-foreground">
+                <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-yellow-500" />
+                <h3 className="text-xl font-semibold">Token Not Supported</h3>
+                <p>
+                  {paymentLink.tokenSymbol} is not supported on the current network.
+                  Please switch to a supported network to make this payment.
+                </p>
+                <div className="mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowNetworkSelector(!showNetworkSelector)}
+                    className="w-full"
+                  >
+                    <Network className="mr-2 h-4 w-4" />
+                    {showNetworkSelector ? "Hide" : "View"} Supported Networks
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Network Selector for unsupported token */}
+        {showNetworkSelector && (
+          <NetworkSelector
+            tokenAddress={currentChainTokenAddress}
+            tokenSymbol={paymentLink.tokenSymbol}
+            requiredAmount={getAmountToCharge()}
+            onNetworkChange={(newChainId) => {
+              console.log("Network changed to:", newChainId);
+              // The component will re-render when chain changes
+            }}
+            className="border-0 shadow-none"
+          />
+        )}
+      </div>
     );
   }
 
@@ -439,20 +615,48 @@ export function PaymentProcessor({
           </div>
         )}
 
+        {/* Network Selector */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Network & Approval Status</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowNetworkSelector(!showNetworkSelector)}
+              className="text-xs"
+            >
+              {showNetworkSelector ? "Hide" : "Show"} Networks
+            </Button>
+          </div>
+
+          {showNetworkSelector && (
+            <NetworkSelector
+              tokenAddress={currentChainTokenAddress}
+              tokenSymbol={paymentLink.tokenSymbol}
+              requiredAmount={getAmountToCharge()}
+              onNetworkChange={(newChainId) => {
+                // Handle network change if needed
+                console.log("Network changed to:", newChainId);
+              }}
+              className="border-0 shadow-none"
+            />
+          )}
+        </div>
+
         {/* Approval/Payment Button */}
         <div className="flex items-center gap-2">
           {needsTokenApproval ? (
             <Button
               onClick={handleApproval}
-              disabled={isApproving || !isConnected || isExpired || isUsed}
+              disabled={paymentStep === 'approving' || !isConnected || isExpired || isUsed}
               className="w-full"
               size="lg"
               variant="outline"
             >
-              {isApproving ? (
+              {paymentStep === 'approving' ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Approving...
+                  Approving {paymentLink.tokenSymbol}...
                 </>
               ) : (
                 <>
@@ -464,14 +668,19 @@ export function PaymentProcessor({
           ) : (
             <Button
               onClick={handlePayment}
-              disabled={isProcessing || !isConnected || isExpired || isUsed}
+              disabled={paymentStep !== 'idle' || !isConnected || isExpired || isUsed}
               className="w-full"
               size="lg"
             >
-              {isProcessing ? (
+              {paymentStep === 'processing' ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  Processing Payment...
+                </>
+              ) : paymentStep === 'confirming' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Confirming Transaction...
                 </>
               ) : (
                 <>
@@ -499,7 +708,29 @@ export function PaymentProcessor({
           </p>
         )}
 
-        {needsTokenApproval && isConnected && (
+        {/* Status Messages */}
+        {paymentStep === 'approving' && (
+          <div className="text-sm text-center text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+            Approving {paymentLink.tokenSymbol} spending... Please confirm in your wallet.
+          </div>
+        )}
+
+        {paymentStep === 'processing' && (
+          <div className="text-sm text-center text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+            Processing payment... Please confirm the transaction in your wallet.
+          </div>
+        )}
+
+        {paymentStep === 'confirming' && (
+          <div className="text-sm text-center text-yellow-600 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+            <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+            Transaction submitted! Waiting for blockchain confirmation...
+          </div>
+        )}
+
+        {needsTokenApproval && isConnected && paymentStep === 'idle' && (
           <p className="text-sm text-center text-muted-foreground">
             You need to approve {paymentLink.tokenSymbol} spending before making
             the payment

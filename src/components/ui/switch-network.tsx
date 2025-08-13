@@ -2,7 +2,7 @@
 
 import { Button } from "./button";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
-import { liskSepolia, scrollSepolia } from "viem/chains";
+import { liskSepolia, scrollSepolia, morphHolesky } from "viem/chains";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -17,7 +17,7 @@ type SwitchNetworkProps = {
 };
 
 // App-supported chains (extend here when adding more)
-const APP_SUPPORTED_CHAINS = [liskSepolia, scrollSepolia] as const;
+const APP_SUPPORTED_CHAINS = [liskSepolia, scrollSepolia, morphHolesky] as const;
 
 export function SwitchNetwork({
   className,

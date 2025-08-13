@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useAccount,
   useReadContract,
@@ -14,12 +14,14 @@ import {
 } from "@/types/profile";
 import { ProfileIPFSService } from "@/lib/profile-ipfs-service";
 import { getContractConfig } from "@/lib/contracts";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useProfileRegistry() {
   const { address } = useAccount();
   const chainId = useChainId();
   const { writeContract, data: hash, isPending } = useWriteContract();
   const [isUploading, setIsUploading] = useState(false);
+  const queryClient = useQueryClient();
 
   // Get contract configuration for current chain
   const contracts = getContractConfig(chainId);
@@ -29,6 +31,28 @@ export function useProfileRegistry() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
+
+  // Invalidate relevant queries when transactions succeed
+  useEffect(() => {
+    if (isSuccess && address) {
+      // Invalidate all profile-related queries for the current user
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          // Invalidate wagmi contract read queries
+          return (
+            Array.isArray(queryKey) &&
+            queryKey.some((key) =>
+              typeof key === 'object' &&
+              key !== null &&
+              'address' in key &&
+              key.address === profileRegistryConfig.address
+            )
+          );
+        },
+      });
+    }
+  }, [isSuccess, address, queryClient, profileRegistryConfig.address]);
 
   // Read functions
   const useGetProfile = (username: string) => {
@@ -76,6 +100,11 @@ export function useProfileRegistry() {
       args: [username],
       query: {
         enabled: !!username,
+        // Force fresh data on every call
+        staleTime: 0,
+        gcTime: 0,
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
       },
     });
   };
@@ -157,18 +186,37 @@ export function useProfileRegistry() {
     });
   };
 
-  const setProfileFeeConfig = (
+  const setProfileFeeConfig = async (
     useCustomFees: boolean,
     platformFeePercent: bigint
   ) => {
     if (!address) throw new Error("Wallet not connected");
 
+    // Write the contract
     writeContract({
       address: profileRegistryConfig.address,
       abi: profileRegistryConfig.abi,
       functionName: "setProfileFeeConfig",
       args: [useCustomFees, platformFeePercent],
     });
+
+    // Force invalidate fee config queries immediately
+    setTimeout(() => {
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            Array.isArray(queryKey) &&
+            queryKey.some((key) =>
+              typeof key === 'object' &&
+              key !== null &&
+              'functionName' in key &&
+              key.functionName === 'getProfileFeeConfig'
+            )
+          );
+        },
+      });
+    }, 1000); // Wait 1 second for transaction to be mined
   };
 
   const withdrawEarnings = (token: Address, amount: bigint) => {

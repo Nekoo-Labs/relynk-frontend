@@ -23,7 +23,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { motion, useTransform, useInView, useScroll } from "motion/react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { ConnectButton } from "@xellar/kit";
 import { useRouter } from "next/navigation";
@@ -31,18 +31,24 @@ import { useRouter } from "next/navigation";
 export default function HeroSection() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll();
+  const [username, setUsername] = useState("");
 
   const router = useRouter();
-
 
   const heroInView = useInView(heroRef, { once: true, margin: "-100px" });
 
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
+  const handleUsernameChange = (value: string) => {
+    // Only allow alphanumeric characters and hyphens, convert to lowercase
+    const sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setUsername(sanitized);
+  };
+
 
 
   return (
-    <section className="relative min-h-[600px] lg:min-h-[700px] flex flex-col pt-[calc(4rem+40px)] pb-20 items-center overflow-hidden">
+    <section className="relative min-h-[600px] lg:min-h-[700px] flex flex-col pt-[calc(4rem+40px)] pb-20 items-center overflow-hidden mt-8">
       <motion.div style={{ y }} className="absolute inset-0">
         <GridPattern className="opacity-30 z-[-1]" />
       </motion.div>
@@ -60,18 +66,15 @@ export default function HeroSection() {
               className="text-5xl lg:text-7xl font-bold relative leading-tight"
               variants={fadeInUp}
             >
-              Create. Share.
-              <br />
-              Get Paid.
+               The Future of
               <br />
               <span className="text-6xl">
-                All{" "}
                 <motion.span
                   className="text-main relative"
                   whileHover={{ scale: 1.1 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  Onchain
+                  Creator Economy.
                   <motion.div
                     className="absolute -top-2 -right-2"
                     variants={floatingAnimation}
@@ -97,27 +100,18 @@ export default function HeroSection() {
             </motion.div>
           </motion.div>
 
-          <motion.p
-            className="text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto leading-relaxed"
-            variants={fadeInUp}
-          >
+          <motion.h2 className="text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto leading-relaxed">
             <motion.span
               className="font-bold text-main"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              Relynk
+              All-in-one Web3 platform for creators to sell, share, and get paid with full ownership.
             </motion.span>{" "}
-            is a Web3-native monetization tool for creators, freelancers, and
-            digital hustlers.
-            <br />
-            Create payment links, sell digital products, and unlock content
-            access — all without Web2 gatekeepers.
-          </motion.p>
+          </motion.h2>
         </motion.div>
 
         <motion.div className="relative group w-full mt-16" variants={fadeInUp}>
-          {/* Enhanced Demo Cards with better animations */}
           <motion.div
             className="relative"
             whileHover="hover"
@@ -164,7 +158,7 @@ export default function HeroSection() {
                         className="text-xs text-gray-500 p-2 bg-gray-100/50 rounded-md block w-full"
                         whileHover={{ backgroundColor: "rgb(243 244 246)" }}
                       >
-                        rely.ink/template123
+                        rely.ink/notion-template
                       </motion.code>
                     </div>
                   </div>
@@ -258,51 +252,170 @@ export default function HeroSection() {
           </motion.div>
         </motion.div>
 
+        {/* Username Call-to-Action Section */}
         <motion.div
-          className="flex items-center mt-20 gap-8 justify-center flex-wrap"
+          className="relative mt-20 mb-20 text-center px-6"
           variants={fadeInUp}
         >
-          <motion.div {...scaleOnHover}>
-            <ConnectButton.Custom>
-              {({ isConnected, openConnectModal }) => (
-                <Button
-                  className="bg-main text-white hover:bg-main/90 text-lg px-10 py-5 shadow-xl"
-                  onClick={() => {
-                    if (isConnected) {
-                      router.push("/dashboard/links/create");
-                    } else {
-                      openConnectModal();
-                    }
-                  }}
-                >
-                  <motion.span
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                    Create Your Link
-                  </motion.span>
-                </Button>
-              )}
-            </ConnectButton.Custom>
-          </motion.div>
-          <motion.div {...scaleOnHover}>
-            <ConnectButton.Custom>
-              {({ isConnected, openConnectModal }) => (
-                <Button
-                  variant="neutral"
-                  className="text-lg px-10 py-5 border-2 border-main/20 shadow-main/20! shadow-sm"
-                  onClick={() => {
-                    if (isConnected) {
-                      router.push("/dashboard");
-                    } else {
-                      openConnectModal();
-                    }
-                  }}
-                >
-                  View Dashboard
-                </Button>
-              )}
-            </ConnectButton.Custom>
+          <motion.div
+            className="flex flex-col items-center space-y-8 max-w-2xl mx-auto"
+            initial="initial"
+            animate="animate"
+            variants={staggerContainer}
+          >
+            {/* Decorative diamond */}
+            <motion.div
+              animate={{
+                rotate: [0, 180, 360],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="mb-4"
+            >
+              <div className="w-4 h-4 bg-main rotate-45 rounded-sm"></div>
+            </motion.div>
+
+            {/* Main Text */}
+            <motion.div className="space-y-4" variants={fadeInUp}>
+              <motion.h3
+                className="text-4xl lg:text-5xl font-bold text-foreground/80"
+                animate={{ opacity: [0.7, 1, 0.7] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              >
+                Claim your
+              </motion.h3>
+              <motion.h3
+                className="text-5xl lg:text-6xl font-bold text-main"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                digital identity
+              </motion.h3>
+              <motion.p
+                className="text-xl text-foreground/60 max-w-lg mx-auto leading-relaxed"
+                variants={fadeInUp}
+              >
+                Get your personalized rely.ink link and start earning today
+              </motion.p>
+            </motion.div>
+
+            {/* Username Input Section */}
+            <motion.div
+              className="w-full max-w-2xl mx-auto"
+              variants={fadeInUp}
+            >
+              <motion.div
+                className="bg-white rounded-3xl p-3 shadow-2xl border border-main/10"
+                whileHover={{
+                  boxShadow: "0 25px 50px -12px rgba(209, 100, 156, 0.25)"
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-main/10 rounded-2xl px-6 py-4 border border-main/20">
+                    <span className="text-main font-bold text-xl">
+                      rely.ink/
+                    </span>
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="your-username"
+                    value={username}
+                    onChange={(e) => handleUsernameChange(e.target.value)}
+                    className="flex-1 bg-transparent border-0 outline-none text-foreground font-medium text-xl placeholder:text-foreground/40 px-4 py-4"
+                    maxLength={20}
+                  />
+
+                  {/* Get Relynk Button */}
+                  <ConnectButton.Custom>
+                    {({ isConnected, openConnectModal }) => (
+                      <Button
+                        className="bg-main text-white hover:bg-main/90 text-xl font-semibold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 min-w-[140px]"
+                        onClick={() => {
+                          if (isConnected) {
+                            if (username.trim()) {
+                              router.push(`/dashboard/profile/setup?username=${username}`);
+                            } else {
+                              router.push("/dashboard/profile/setup");
+                            }
+                          } else {
+                            openConnectModal();
+                          }
+                        }}
+                        disabled={!username.trim() || username.length < 3}
+                      >
+                        <motion.span
+                          animate={{
+                            scale: username.length >= 3 ? [1, 1.05, 1] : 1
+                          }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          Get Relynk
+                        </motion.span>
+                      </Button>
+                    )}
+                  </ConnectButton.Custom>
+                </div>
+              </motion.div>
+
+              {/* Username validation feedback */}
+              <motion.div
+                className="mt-4 text-center"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{
+                  opacity: username.length > 0 ? 1 : 0,
+                  y: username.length > 0 ? 0 : 10
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                {username.length > 0 && username.length < 3 && (
+                  <p className="text-red-500 text-sm font-medium">
+                    Username must be at least 3 characters
+                  </p>
+                )}
+                {username.length >= 3 && (
+                  <p className="text-green-500 text-sm font-medium">
+                    ✓ Username looks good!
+                  </p>
+                )}
+              </motion.div>
+            </motion.div>
+
+            {/* Decorative elements */}
+            <motion.div
+              className="absolute -top-8 -right-8 opacity-60"
+              animate={{
+                rotate: [0, 360],
+                scale: [1, 1.2, 1]
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <Star className="w-6 h-6 text-yellow-400 fill-current" />
+            </motion.div>
+            <motion.div
+              className="absolute -bottom-6 -left-8 opacity-40"
+              animate={{
+                rotate: [360, 0],
+                scale: [1, 1.3, 1]
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 2
+              }}
+            >
+              <Star className="w-4 h-4 text-main fill-current" />
+            </motion.div>
           </motion.div>
         </motion.div>
       </motion.div>

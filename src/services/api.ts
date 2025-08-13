@@ -345,8 +345,11 @@ export const api = {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      staleTime: 10 * 60 * 1000, // 10 minutes - reduce refetching
+      gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false, // Disable refetch on window focus
+      refetchOnMount: false, // Only refetch if data is stale
+      refetchOnReconnect: true, // Keep this for network reconnection
       retry: (failureCount, error) => {
         // Don't retry on 4xx errors except timeout
         if (error instanceof ApiRequestError) {
@@ -358,7 +361,7 @@ export const queryClient = new QueryClient({
             return false;
           }
         }
-        return failureCount < 3;
+        return failureCount < 2; // Reduce retry attempts
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
@@ -409,4 +412,37 @@ export type QueryKey = readonly unknown[];
 // Utility function to invalidate related queries
 export function invalidateQueries(pattern: readonly unknown[]) {
   return queryClient.invalidateQueries({ queryKey: pattern });
+}
+
+// Centralized cache invalidation for payment-related data
+export function invalidatePaymentRelatedCaches(address?: string) {
+  if (!address) return;
+
+  // Invalidate payment links
+  queryClient.invalidateQueries({
+    queryKey: ["paymentLinks"],
+  });
+
+  // Invalidate payment transactions
+  queryClient.invalidateQueries({
+    queryKey: ["payments", address],
+  });
+
+  // Invalidate analytics data
+  queryClient.invalidateQueries({
+    queryKey: ["creator-analytics", address],
+  });
+
+  // Invalidate any time-range analytics
+  queryClient.invalidateQueries({
+    predicate: (query) => {
+      const queryKey = query.queryKey;
+      return Array.isArray(queryKey) &&
+             (queryKey.includes("time-range-analytics") ||
+              queryKey.includes("top-performing-links") ||
+              queryKey.includes("revenue-trends"));
+    },
+  });
+
+  console.log("Invalidated payment-related caches for address:", address);
 }

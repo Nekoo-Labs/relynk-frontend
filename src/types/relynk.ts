@@ -54,6 +54,10 @@ export interface BaseMetadata {
     avatar?: string;
     bio?: string;
   };
+  // Network information for cross-chain compatibility
+  originalChainId?: number;
+  tokenSymbol?: string;
+  tokenDecimals?: number;
 }
 
 export interface PaymentMetadata extends BaseMetadata {

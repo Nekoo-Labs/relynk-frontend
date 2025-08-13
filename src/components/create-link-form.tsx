@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccount, useSignMessage } from "wagmi";
+import { useAccount, useSignMessage, useChainId } from "wagmi";
 import { parseUnits } from "viem";
+import { normalizeNumberForParseUnits } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +44,7 @@ import {
 import { CreateLinkFormData } from "@/types/relynk";
 import { useRelynkProcessor } from "@/hooks/use-relynk-processor";
 import { useCreatePaymentLink } from "@/hooks/use-payment-links";
-import { SUPPORTED_TOKENS } from "@/lib/contracts";
+import { getTokenConfig } from "@/lib/contracts";
 import {
   linkFormUISchema,
   type LinkFormUIData,
@@ -62,6 +63,7 @@ interface CreateLinkFormProps {
 export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSelection = false }: CreateLinkFormProps) {
   const { address, isConnected, isConnecting } = useAccount();
   const { signMessage, isPending: isSigningPending } = useSignMessage();
+  const chainId = useChainId();
   const { createLinkData } = useRelynkProcessor();
   const createPaymentLinkMutation = useCreatePaymentLink();
   const isSubmittingRef = useRef(false);
@@ -109,6 +111,19 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
 
   const watchedLinkType = form.watch("linkType");
 
+  // Reset cancelled state after a delay to allow retry
+  useEffect(() => {
+    if (isCancelled) {
+      const timer = setTimeout(() => {
+        setIsCancelled(false);
+        isSubmittingRef.current = false;
+        console.log("Reset cancelled state - user can retry now");
+      }, 2000); // 2 second delay before allowing retry
+
+      return () => clearTimeout(timer);
+    }
+  }, [isCancelled]);
+
   const linkTypes = [
     {
       id: "payment" as const,
@@ -136,16 +151,18 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
     },
   ];
 
-  // Map currency to token address using deployed contract addresses
+  // Map currency to token address using current network's deployed contract addresses
   const getTokenAddress = (currency: string): `0x${string}` => {
-    const token = SUPPORTED_TOKENS[currency as keyof typeof SUPPORTED_TOKENS];
-    return token?.address || SUPPORTED_TOKENS.USDC.address;
+    const currentChainTokens = getTokenConfig(chainId);
+    const token = currentChainTokens[currency as keyof typeof currentChainTokens];
+    return token?.address || currentChainTokens.USDC.address;
   };
 
   // Get token decimals for proper amount formatting
   const getTokenDecimals = (currency: string): number => {
-    const token = SUPPORTED_TOKENS[currency as keyof typeof SUPPORTED_TOKENS];
-    return token?.decimals || SUPPORTED_TOKENS.USDC.decimals;
+    const currentChainTokens = getTokenConfig(chainId);
+    const token = currentChainTokens[currency as keyof typeof currentChainTokens];
+    return token?.decimals || currentChainTokens.USDC.decimals;
   };
 
   // Handle image upload
@@ -223,11 +240,17 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
 
     // Prevent multiple submissions
     if (isSubmittingRef.current || isSigningPending || isCancelled) {
+      console.log("Submission blocked:", {
+        isSubmitting: isSubmittingRef.current,
+        isSigningPending,
+        isCancelled
+      });
       return;
     }
 
     isSubmittingRef.current = true;
     setIsCreating(true);
+    setIsCancelled(false); // Reset cancellation state
     setIsCancelled(false);
 
     try {
@@ -261,7 +284,7 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
       // Format amount with proper decimals for the selected token
       const tokenDecimals = getTokenDecimals(data.currency);
       const formattedAmount = data.amount
-        ? parseUnits(data.amount, tokenDecimals).toString()
+        ? parseUnits(normalizeNumberForParseUnits(data.amount), tokenDecimals).toString()
         : "0";
 
       // console.log("Token decimals:", tokenDecimals);
@@ -288,7 +311,10 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
       const { MetadataCreator } = await import("@/lib/metadata-creator");
 
       const comprehensiveMetadata = await MetadataCreator.createMetadata(
-        linkFormData
+        linkFormData,
+        chainId,
+        data.currency,
+        tokenDecimals
       );
       // console.log("Metadata created:", comprehensiveMetadata);
 
@@ -407,12 +433,16 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
           errorMessage.includes("user denied") ||
           errorMessage.includes("cancelled") ||
           errorMessage.includes("rejected") ||
+          errorMessage.includes("user cancelled") ||
+          errorMessage.includes("transaction was rejected") ||
           errorName.includes("userrejected") ||
-          errorName.includes("cancelled")
+          errorName.includes("cancelled") ||
+          errorName.includes("userrejectedrequest")
         ) {
-          // User cancelled - don't show error, just reset state
-          // console.log("User cancelled signature request");
+          // User cancelled - don't show error, just reset state silently
+          console.log("User cancelled signature request - resetting form state");
           setIsCancelled(true);
+          // Don't reset isSubmittingRef here to prevent immediate retry
           return; // Exit early without showing error
         } else {
           toast.error(`Failed to create link: ${error.message}`);
@@ -421,7 +451,11 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
         toast.error("Failed to create link: Unknown error");
       }
     } finally {
-      isSubmittingRef.current = false;
+      // Only reset submission state if not cancelled
+      // This prevents immediate retry after cancellation
+      if (!isCancelled) {
+        isSubmittingRef.current = false;
+      }
       setIsCreating(false);
     }
   };
@@ -792,13 +826,11 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="USDC">USDC - USD Coin</SelectItem>
-                          <SelectItem value="USDT">
-                            USDT - Tether USD
-                          </SelectItem>
-                          <SelectItem value="IDRX">
-                            IDRX - Indonesian Rupiah Token
-                          </SelectItem>
+                          {Object.entries(getTokenConfig(chainId)).map(([symbol, token]) => (
+                            <SelectItem key={symbol} value={symbol}>
+                              {symbol} - {token.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

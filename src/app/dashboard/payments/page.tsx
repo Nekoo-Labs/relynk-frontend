@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePayments } from "@/hooks/use-payments";
 import { useAccount } from "wagmi";
+import { invalidatePaymentRelatedCaches } from "@/services/api";
+import { toast } from "sonner";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -23,7 +25,7 @@ import {
 } from "lucide-react";
 
 export default function PaymentsPage() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { payments, stats, isLoading, error, isRefetching, refetch } =
     usePayments();
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,6 +56,15 @@ export default function PaymentsPage() {
       `${process.env.NEXT_PUBLIC_BLOCK_EXPLORER_URL}/tx/${txHash}`,
       "_blank"
     );
+  };
+
+  const handleRefresh = async () => {
+    if (address) {
+      // Invalidate caches and refetch data
+      invalidatePaymentRelatedCaches(address);
+      await refetch();
+      toast.success("Payment data refreshed! 🔄");
+    }
   };
 
   if (!isConnected) {
@@ -194,14 +205,26 @@ export default function PaymentsPage() {
         {/* Payments Table */}
         <Card>
           <CardHeader>
-            <CardTitle>
-              Transaction History ({filteredPayments.length})
-              {error && (
-                <Badge variant="destructive" className="ml-2">
-                  Error loading data
-                </Badge>
-              )}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>
+                Transaction History ({filteredPayments.length})
+                {error && (
+                  <Badge variant="destructive" className="ml-2">
+                    Error loading data
+                  </Badge>
+                )}
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading || isRefetching}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -233,7 +256,7 @@ export default function PaymentsPage() {
                   Failed to load payment history: {error}
                 </div>
                 <Button
-                  onClick={() => refetch()}
+                  onClick={handleRefresh}
                   variant="neutral"
                   className="mt-4"
                 >

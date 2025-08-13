@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { useProfileRegistry } from "@/hooks/use-profile-registry";
-import { Settings, CheckCircle, Loader2, User } from "lucide-react";
+import { Settings, CheckCircle, Loader2, User, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export function FeeConfiguration() {
@@ -37,6 +37,7 @@ export function FeeConfiguration() {
 
   // Get current fee configuration
   const feeConfig = useGetProfileFeeConfig(username || "");
+  const { refetch: refetchFeeConfig } = feeConfig;
 
   // Update local state when data loads
   useEffect(() => {
@@ -90,6 +91,19 @@ export function FeeConfiguration() {
       }
     }
   }, [useCustomFees, feePercent, feeConfig.data]);
+
+  // Handle transaction success
+  useEffect(() => {
+    if (isSuccess) {
+      // Refetch fee configuration data after a short delay
+      setTimeout(() => {
+        refetchFeeConfig();
+      }, 2000); // Wait 2 seconds for blockchain to update
+
+      toast.success("Fee configuration updated successfully! ✅");
+      setHasChanges(false); // Reset changes flag
+    }
+  }, [isSuccess, refetchFeeConfig]);
 
   const handleSave = async () => {
     try {
@@ -192,16 +206,38 @@ export function FeeConfiguration() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Personal Fee Configuration
-        </CardTitle>
-        <p className="text-sm text-foreground/60 mt-2">
-          Configure your individual platform fees. These settings only apply to
-          your profile and earnings - they don&apos;t affect other users.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Personal Fee Configuration
+            </CardTitle>
+            <p className="text-sm text-foreground/60 mt-2">
+              Configure your individual platform fees. These settings only apply to
+              your profile and earnings - they don&apos;t affect other users.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetchFeeConfig()}
+            disabled={feeConfig.isLoading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${feeConfig.isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Loading indicator */}
+        {feeConfig.isLoading && (
+          <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-3 rounded-base border border-blue-200">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Refreshing fee configuration...
+          </div>
+        )}
+
         {/* Custom Fee Toggle */}
         <div className="p-6 border border-border rounded-base bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center justify-between">

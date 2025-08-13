@@ -72,8 +72,11 @@ export function useAnalytics() {
     queryKey: ["creator-analytics", address],
     queryFn: () => (address ? fetchCreatorAnalytics(address) : null),
     enabled: !!address,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    // refetchInterval: 30 * 1000, // Removed annoying auto refetch every 30 seconds
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false, // Disable aggressive refetching
+    refetchOnMount: false, // Only refetch if stale
+    // Remove refetchInterval to stop constant polling
   });
 
   const analytics = useMemo(() => {

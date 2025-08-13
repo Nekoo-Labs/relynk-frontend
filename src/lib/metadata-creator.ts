@@ -19,7 +19,10 @@ export class MetadataCreator {
    * Creates the base metadata structure common to all link types
    */
   private static async createBaseMetadata(
-    formData: CreateLinkFormData
+    formData: CreateLinkFormData,
+    chainId?: number,
+    tokenSymbol?: string,
+    tokenDecimals?: number
   ): Promise<BaseMetadata> {
     return {
       title: formData.title,
@@ -34,6 +37,10 @@ export class MetadataCreator {
         avatar: undefined,
         bio: undefined,
       },
+      // Network information for cross-chain compatibility
+      originalChainId: chainId,
+      tokenSymbol: tokenSymbol,
+      tokenDecimals: tokenDecimals,
     };
   }
 
@@ -191,9 +198,12 @@ export class MetadataCreator {
    * Creates the appropriate metadata structure based on link type
    */
   public static async createMetadata(
-    formData: CreateLinkFormData
+    formData: CreateLinkFormData,
+    chainId?: number,
+    tokenSymbol?: string,
+    tokenDecimals?: number
   ): Promise<LinkMetadata> {
-    const baseMetadata = await this.createBaseMetadata(formData);
+    const baseMetadata = await this.createBaseMetadata(formData, chainId, tokenSymbol, tokenDecimals);
 
     switch (formData.linkType) {
       case LinkType.PAYMENT:

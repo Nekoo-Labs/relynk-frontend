@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 
 import { useProfileRegistry } from "@/hooks/use-profile-registry";
 import { getTokenConfig } from "@/lib/contracts";
+import { normalizeNumberForParseUnits } from "@/lib/utils";
 import { formatUnits, parseUnits } from "viem";
 import { Download, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ export function WithdrawEarnings() {
 
   // Get fee configuration
   const feeConfig = useGetProfileFeeConfig(username || "");
+  const { refetch: refetchFeeConfig } = feeConfig;
 
   // Calculate available amount
   const getAvailableAmount = () => {
@@ -88,7 +90,7 @@ export function WithdrawEarnings() {
     if (!withdrawAmount || !configData) return null;
 
     try {
-      const amount = parseUnits(withdrawAmount, tokenInfo.decimals);
+      const amount = parseUnits(normalizeNumberForParseUnits(withdrawAmount), tokenInfo.decimals);
       const feePercent = configData.useCustomFees
         ? configData.platformFeePercent || BigInt(250)
         : BigInt(250); // Default 2.5%

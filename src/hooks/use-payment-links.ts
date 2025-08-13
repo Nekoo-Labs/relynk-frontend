@@ -30,8 +30,11 @@ export function usePaymentLinks(creator?: string) {
       );
     },
     enabled: !!creator,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false, // Disable aggressive refetching
+    refetchOnMount: false, // Only refetch if stale
+    // Remove refetchInterval to stop constant polling
     retry: (failureCount, error) => {
       console.error("Failed to fetch payment links:", error);
       return failureCount < 2;
@@ -52,8 +55,10 @@ export function usePaymentLink(linkId?: string) {
       return await UnifiedIPFSService.getPaymentLink(linkId);
     },
     enabled: !!linkId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false, // Disable aggressive refetching
+    refetchOnMount: false, // Only refetch if stale
     retry: (failureCount, error) => {
       console.error("Failed to fetch payment link:", error);
       return failureCount < 2;
