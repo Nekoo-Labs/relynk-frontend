@@ -30,18 +30,24 @@ export function EarningsOverview() {
   const getAvailableAmount = (earnings: {
     data?: unknown;
   }) => {
-    const earningsData = earnings.data as {
-      totalEarned?: bigint;
-      totalWithdrawn?: bigint;
-    } | undefined;
-
-    if (!earningsData || !earningsData.totalEarned || !earningsData.totalWithdrawn) {
+    if (!earnings.data) {
       return BigInt(0);
     }
 
     try {
-      const totalEarned = BigInt(earningsData.totalEarned || 0);
-      const totalWithdrawn = BigInt(earningsData.totalWithdrawn || 0);
+      const data = earnings.data as any;
+      let totalEarned: bigint;
+      let totalWithdrawn: bigint;
+
+      // Handle both array format [totalEarned, totalWithdrawn, available] and object format
+      if (Array.isArray(data)) {
+        totalEarned = BigInt(data[0] || 0);
+        totalWithdrawn = BigInt(data[1] || 0);
+      } else {
+        totalEarned = BigInt(data.totalEarned || 0);
+        totalWithdrawn = BigInt(data.totalWithdrawn || 0);
+      }
+
       return totalEarned - totalWithdrawn;
     } catch (error) {
       console.error("Error calculating available amount:", error);
