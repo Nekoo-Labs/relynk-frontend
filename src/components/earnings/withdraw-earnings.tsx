@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { useProfileRegistry } from "@/hooks/use-profile-registry";
-import { SUPPORTED_TOKENS } from "@/lib/contracts";
+import { getTokenConfig } from "@/lib/contracts";
 import { formatUnits, parseUnits } from "viem";
 import { Download, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function WithdrawEarnings() {
   const { address } = useAccount();
+  const chainId = useChainId();
   const {
     useGetProfileByOwner,
     useGetCreatorEarnings,
@@ -26,6 +27,8 @@ export function WithdrawEarnings() {
     hash
   } = useProfileRegistry();
 
+  // Get chain-specific token configuration
+  const SUPPORTED_TOKENS = getTokenConfig(chainId);
   const [selectedToken, setSelectedToken] = useState<keyof typeof SUPPORTED_TOKENS>("USDC");
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
@@ -39,19 +42,31 @@ export function WithdrawEarnings() {
     SUPPORTED_TOKENS[selectedToken].address
   );
 
+
+
   // Get fee configuration
   const feeConfig = useGetProfileFeeConfig(username || "");
 
   // Calculate available amount
   const getAvailableAmount = () => {
-    const earningsData = earnings.data as { totalEarned?: bigint; totalWithdrawn?: bigint } | undefined;
-    if (!earningsData || !earningsData.totalEarned || !earningsData.totalWithdrawn) {
+    if (!earnings.data) {
       return BigInt(0);
     }
 
     try {
-      const totalEarned = BigInt(earningsData.totalEarned || 0);
-      const totalWithdrawn = BigInt(earningsData.totalWithdrawn || 0);
+      const data = earnings.data as any;
+      let totalEarned: bigint;
+      let totalWithdrawn: bigint;
+
+      // Handle both array format [totalEarned, totalWithdrawn, available] and object format
+      if (Array.isArray(data)) {
+        totalEarned = BigInt(data[0] || 0);
+        totalWithdrawn = BigInt(data[1] || 0);
+      } else {
+        totalEarned = BigInt(data.totalEarned || 0);
+        totalWithdrawn = BigInt(data.totalWithdrawn || 0);
+      }
+
       return totalEarned - totalWithdrawn;
     } catch (error) {
       console.error("Error calculating available amount:", error);
@@ -193,6 +208,8 @@ export function WithdrawEarnings() {
           </div>
         </div>
 
+
+
         {/* Available Balance */}
         <div className="p-4 bg-secondary/20 rounded-base border border-border">
           <div className="flex items-center justify-between">
@@ -201,6 +218,16 @@ export function WithdrawEarnings() {
               {formatUnits(availableAmount, tokenInfo.decimals)} {tokenInfo.symbol}
             </span>
           </div>
+          {availableAmount === BigInt(0) && (
+            <div className="mt-2 text-xs text-foreground/60">
+              💡 No earnings available yet. Make sure:
+              <ul className="mt-1 ml-4 list-disc">
+                <li>You have received payments to your payment links</li>
+                <li>You're connected to the correct network</li>
+                <li>You have a profile created</li>
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Withdrawal Amount */}
