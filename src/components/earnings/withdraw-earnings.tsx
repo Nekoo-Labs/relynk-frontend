@@ -24,25 +24,28 @@ export function WithdrawEarnings() {
     isPending,
     isConfirming,
     isSuccess,
-    hash
+    hash,
   } = useProfileRegistry();
 
   // Get chain-specific token configuration
   const SUPPORTED_TOKENS = getTokenConfig(chainId);
-  const [selectedToken, setSelectedToken] = useState<keyof typeof SUPPORTED_TOKENS>("USDC");
+  const [selectedToken, setSelectedToken] =
+    useState<keyof typeof SUPPORTED_TOKENS>("USDC");
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
   // Get profile to get username
-  const { data: profileResult } = useGetProfileByOwner(address || "0x0000000000000000000000000000000000000000");
-  const [_profile, username] = (profileResult as [unknown, string] | undefined) || [null, ""];
+  const { data: profileResult } = useGetProfileByOwner(
+    address || "0x0000000000000000000000000000000000000000"
+  );
+  const [_profile, username] = (profileResult as
+    | [unknown, string]
+    | undefined) || [null, ""];
 
   // Get earnings for selected token
   const earnings = useGetCreatorEarnings(
     address || "0x0000000000000000000000000000000000000000",
     SUPPORTED_TOKENS[selectedToken].address
   );
-
-
 
   // Get fee configuration
   const feeConfig = useGetProfileFeeConfig(username || "");
@@ -80,7 +83,9 @@ export function WithdrawEarnings() {
 
   // Calculate withdrawal preview
   const calculateWithdrawPreview = () => {
-    const configData = feeConfig.data as { useCustomFees?: boolean; platformFeePercent?: bigint } | undefined;
+    const configData = feeConfig.data as
+      | { useCustomFees?: boolean; platformFeePercent?: bigint }
+      | undefined;
     if (!withdrawAmount || !configData) return null;
 
     try {
@@ -121,7 +126,7 @@ export function WithdrawEarnings() {
         SUPPORTED_TOKENS[selectedToken].address,
         withdrawPreview.grossAmount
       );
-      
+
       toast.success("Withdrawal initiated! Please confirm the transaction.");
     } catch (error) {
       console.error("Withdrawal error:", error);
@@ -175,7 +180,9 @@ export function WithdrawEarnings() {
           <div className="text-center py-8 text-foreground/60">
             <Download className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No profile found.</p>
-            <p className="text-sm">Create a profile first to withdraw earnings.</p>
+            <p className="text-sm">
+              Create a profile first to withdraw earnings.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -200,7 +207,9 @@ export function WithdrawEarnings() {
                 key={key}
                 variant={selectedToken === key ? "default" : "outline"}
                 size="sm"
-                onClick={() => setSelectedToken(key as keyof typeof SUPPORTED_TOKENS)}
+                onClick={() =>
+                  setSelectedToken(key as keyof typeof SUPPORTED_TOKENS)
+                }
                 className="flex items-center gap-2"
               >
                 {token.symbol}
@@ -209,14 +218,15 @@ export function WithdrawEarnings() {
           </div>
         </div>
 
-
-
         {/* Available Balance */}
         <div className="p-4 bg-secondary/20 rounded-base border border-border">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground/80">Available Balance:</span>
+            <span className="text-sm text-foreground/80">
+              Available Balance:
+            </span>
             <span className="font-bold text-foreground">
-              {formatUnits(availableAmount, tokenInfo.decimals)} {tokenInfo.symbol}
+              {formatUnits(availableAmount, tokenInfo.decimals)}{" "}
+              {tokenInfo.symbol}
             </span>
           </div>
           {availableAmount === BigInt(0) && (
@@ -224,7 +234,7 @@ export function WithdrawEarnings() {
               💡 No earnings available yet. Make sure:
               <ul className="mt-1 ml-4 list-disc">
                 <li>You have received payments to your payment links</li>
-                <li>You're connected to the correct network</li>
+                <li>You&apos;re connected to the correct network</li>
                 <li>You have a profile created</li>
               </ul>
             </div>
@@ -257,7 +267,9 @@ export function WithdrawEarnings() {
         {/* Withdrawal Preview */}
         {withdrawPreview && (
           <div className="p-4 bg-blue-50 rounded-base border border-blue-200">
-            <h4 className="font-semibold text-blue-900 mb-2">Your Withdrawal Preview</h4>
+            <h4 className="font-semibold text-blue-900 mb-2">
+              Your Withdrawal Preview
+            </h4>
             <p className="text-xs text-blue-700 mb-3">
               Based on your personal fee settings:
             </p>
@@ -265,19 +277,27 @@ export function WithdrawEarnings() {
               <div className="flex justify-between">
                 <span className="text-blue-700">Gross Amount:</span>
                 <span className="font-medium">
-                  {formatUnits(withdrawPreview.grossAmount, tokenInfo.decimals)} {tokenInfo.symbol}
+                  {formatUnits(withdrawPreview.grossAmount, tokenInfo.decimals)}{" "}
+                  {tokenInfo.symbol}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-700">Your Platform Fee ({withdrawPreview.feePercent}%):</span>
+                <span className="text-blue-700">
+                  Your Platform Fee ({withdrawPreview.feePercent}%):
+                </span>
                 <span className="font-medium text-red-600">
-                  -{formatUnits(withdrawPreview.platformFee, tokenInfo.decimals)} {tokenInfo.symbol}
+                  -
+                  {formatUnits(withdrawPreview.platformFee, tokenInfo.decimals)}{" "}
+                  {tokenInfo.symbol}
                 </span>
               </div>
               <div className="flex justify-between border-t border-blue-200 pt-1">
-                <span className="text-blue-900 font-semibold">You Receive:</span>
+                <span className="text-blue-900 font-semibold">
+                  You Receive:
+                </span>
                 <span className="font-bold text-green-600">
-                  {formatUnits(withdrawPreview.netAmount, tokenInfo.decimals)} {tokenInfo.symbol}
+                  {formatUnits(withdrawPreview.netAmount, tokenInfo.decimals)}{" "}
+                  {tokenInfo.symbol}
                 </span>
               </div>
             </div>
@@ -288,10 +308,10 @@ export function WithdrawEarnings() {
         <Button
           onClick={handleWithdraw}
           disabled={
-            !withdrawAmount || 
-            !withdrawPreview || 
+            !withdrawAmount ||
+            !withdrawPreview ||
             withdrawPreview.grossAmount > availableAmount ||
-            isPending || 
+            isPending ||
             isConfirming ||
             availableAmount === BigInt(0)
           }
@@ -315,8 +335,8 @@ export function WithdrawEarnings() {
           <div className="flex items-center gap-2 p-3 bg-green-50 rounded-base border border-green-200">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <span className="text-sm text-green-800">
-              Withdrawal successful! 
-              <a 
+              Withdrawal successful!
+              <a
                 href={`https://sepolia-blockscout.lisk.com/tx/${hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
