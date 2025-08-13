@@ -46,6 +46,7 @@ export function WithdrawEarnings() {
 
   // Get fee configuration
   const feeConfig = useGetProfileFeeConfig(username || "");
+  const { refetch: refetchFeeConfig } = feeConfig;
 
   // Calculate available amount
   const getAvailableAmount = () => {
