@@ -14,6 +14,7 @@ import {
   ExternalLink,
   MoreHorizontal,
   Plus,
+  RefreshCw,
   Search,
   Trash2,
   Loader2,
@@ -22,6 +23,7 @@ import Link from "next/link";
 import CreateLinkLauncher from "@/components/payment/create-link-launcher";
 import { PaymentLink, LinkType } from "@/types/relynk";
 import { toast } from "sonner";
+import { invalidatePaymentRelatedCaches } from "@/services/api";
 import {
   useUserPaymentLinks,
   useDeletePaymentLink,
@@ -71,6 +73,15 @@ export default function LinksPage() {
     if (!address) return;
 
     deletePaymentLinkMutation.mutate(linkId);
+  };
+
+  const handleRefresh = async () => {
+    if (address) {
+      // Invalidate caches and refetch data
+      invalidatePaymentRelatedCaches(address);
+      await refetch();
+      toast.success("Data refreshed! 🔄");
+    }
   };
 
   const getStatusFromLink = (
@@ -211,10 +222,22 @@ export default function LinksPage() {
         {/* Links Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              All Links ({filteredLinks.length})
-              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                All Links ({filteredLinks.length})
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (

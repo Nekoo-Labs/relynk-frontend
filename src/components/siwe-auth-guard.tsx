@@ -77,8 +77,7 @@ export function SiweAuthGuard({ children }: SiweAuthGuardProps) {
                   )}
                 </Button>
                 <p className="text-xs text-foreground/50 text-center">
-                  Authentication should happen automatically when you connect
-                  your wallet
+                  Click the button above to sign in with your connected wallet
                 </p>
               </div>
             )}

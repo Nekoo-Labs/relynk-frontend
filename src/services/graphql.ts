@@ -1,6 +1,6 @@
 import { GraphQLClient } from 'graphql-request';
 import { useChainId } from 'wagmi';
-import { liskSepolia, scrollSepolia } from 'viem/chains';
+import { liskSepolia, scrollSepolia, morphHolesky } from 'viem/chains';
 
 // Network-specific GraphQL endpoints
 const GRAPHQL_ENDPOINTS = {
@@ -11,6 +11,10 @@ const GRAPHQL_ENDPOINTS = {
   [scrollSepolia.id]: {
     profile: 'https://indexer.dev.hyperindex.xyz/e647b58/v1/graphql',
     processor: 'https://indexer.dev.hyperindex.xyz/e647b58/v1/graphql'
+  },
+  [morphHolesky.id]: {
+    profile: 'https://indexer.dev.hyperindex.xyz/fd0f205/v1/graphql',
+    processor: 'https://indexer.dev.hyperindex.xyz/fd0f205/v1/graphql'
   }
 } as const;
 

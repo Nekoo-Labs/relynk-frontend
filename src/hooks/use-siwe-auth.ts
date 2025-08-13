@@ -86,6 +86,28 @@ export function useSiweAuth() {
       }
     } catch (error) {
       console.error("SIWE sign in failed:", error);
+
+      // Better error handling for user cancellation
+      if (error instanceof Error) {
+        const errorMessage = error.message.toLowerCase();
+        const errorName = error.name?.toLowerCase() || "";
+
+        // Check for user cancellation patterns
+        if (
+          errorMessage.includes("user rejected") ||
+          errorMessage.includes("user denied") ||
+          errorMessage.includes("cancelled") ||
+          errorMessage.includes("rejected") ||
+          errorMessage.includes("user cancelled") ||
+          errorName.includes("userrejected") ||
+          errorName.includes("cancelled")
+        ) {
+          // User cancelled - don't retry, just reset state silently
+          console.log("User cancelled SIWE authentication");
+          return; // Exit without throwing to prevent recursive popups
+        }
+      }
+
       throw error;
     } finally {
       setIsLoading(false);
@@ -97,7 +119,13 @@ export function useSiweAuth() {
   signInRef.current = signInWithEthereum;
 
   // Auto-trigger SIWE authentication when wallet is connected but not authenticated
+  // DISABLED to prevent double signing - users can manually sign in
   useEffect(() => {
+    // Disable auto sign-in to fix double signing issue
+    const autoSignInEnabled = false;
+
+    if (!autoSignInEnabled) return;
+
     // Add more specific conditions to prevent recursive calls
     const shouldAutoSignIn =
       isConnected &&
@@ -120,7 +148,7 @@ export function useSiweAuth() {
       });
       setAutoSignInAttempted(true);
 
-      // Add a small delay to prevent rapid-fire attempts
+      // Add a longer delay to prevent rapid-fire attempts
       setTimeout(() => {
         if (!authInProgressRef.current) {
           // Double-check before proceeding
@@ -131,7 +159,7 @@ export function useSiweAuth() {
             authInProgressRef.current = false;
           });
         }
-      }, 100);
+      }, 500); // Increased delay
     }
   }, [
     isConnected,

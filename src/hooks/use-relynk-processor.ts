@@ -63,6 +63,35 @@ export function useRelynkProcessor() {
     });
   };
 
+  // Helper to detect user cancellation
+  const isUserRejection = (error: any): boolean => {
+    if (!error) return false;
+
+    const errorMessage = error.message || error.toString();
+    const rejectionPatterns = [
+      'user rejected',
+      'user denied',
+      'user cancelled',
+      'user canceled',
+      'rejected by user',
+      'denied by user',
+      'cancelled by user',
+      'canceled by user',
+      'transaction was rejected',
+      'transaction rejected',
+      'user rejected the request',
+      'user rejected transaction',
+      'ACTION_REJECTED',
+      'UNAUTHORIZED',
+      'User rejected',
+      'User denied',
+    ];
+
+    return rejectionPatterns.some(pattern =>
+      errorMessage.toLowerCase().includes(pattern.toLowerCase())
+    );
+  };
+
   // Write functions
   const processPayment = async (
     paymentRequest: PaymentRequest
@@ -87,6 +116,14 @@ export function useRelynkProcessor() {
       return { success: true };
     } catch (error) {
       console.error("Payment processing failed:", error);
+
+      if (isUserRejection(error)) {
+        return {
+          success: false,
+          error: "Transaction was canceled by user",
+        };
+      }
+
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -119,6 +156,14 @@ export function useRelynkProcessor() {
       return { success: true };
     } catch (error) {
       console.error("Donation processing failed:", error);
+
+      if (isUserRejection(error)) {
+        return {
+          success: false,
+          error: "Transaction was canceled by user",
+        };
+      }
+
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -146,6 +191,14 @@ export function useRelynkProcessor() {
       return { success: true };
     } catch (error) {
       console.error("Product purchase failed:", error);
+
+      if (isUserRejection(error)) {
+        return {
+          success: false,
+          error: "Transaction was canceled by user",
+        };
+      }
+
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -176,6 +229,14 @@ export function useRelynkProcessor() {
       };
     } catch (error) {
       console.error("Content purchase failed:", error);
+
+      if (isUserRejection(error)) {
+        return {
+          success: false,
+          error: "Transaction was canceled by user",
+        };
+      }
+
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",

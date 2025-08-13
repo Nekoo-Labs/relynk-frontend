@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { Zap, Gift, ShoppingBag, FileText, Plus } from "lucide-react";
+import { Zap, Gift, ShoppingBag, FileText, Plus, X } from "lucide-react";
 
 type CreateLinkLauncherProps = {
   className?: string;
@@ -50,16 +50,23 @@ function CreateLinkLauncher({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-full sm:max-w-3xl md:max-w-4xl lg:max-w-5xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <DialogContent className="max-w-[95vw] max-h-[85vh] sm:max-w-2xl md:max-w-3xl p-3 sm:p-6 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+          <DialogHeader className="space-y-2 pb-4 relative">
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute right-0 top-0 p-2 rounded-lg hover:bg-secondary/80 transition-colors sm:hidden"
+              aria-label="Close dialog"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-foreground pr-8 sm:pr-0">
               Select your payment type
             </DialogTitle>
-            <DialogDescription className="text-foreground/70">
+            <DialogDescription className="text-sm text-foreground/70">
               Create your payment in 3 easy steps
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch max-h-[calc(100vh-200px)] overflow-auto py-2">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 max-h-[55vh] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent p-1">
             <Option
               icon={<Zap className="h-full w-full" />}
               title="Payment Link"
@@ -108,21 +115,21 @@ const Option = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="group h-full w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-main focus:ring-offset-2 disabled:opacity-60"
+    className="group w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-main focus:ring-offset-2 disabled:opacity-60"
   >
-    <Card className="relative h-full overflow-hidden rounded-[20px] border-2 border-border/80 bg-secondary-background/40 transition-all duration-300 transform group-hover:-translate-y-0.5 group-hover:border-main/50">
-      <div className="flex h-full flex-col items-center justify-between p-6">
-        {/* Top visual */}
-        <div className="flex flex-1 items-center justify-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-background text-main">
-            <div className="h-8 w-8">{icon}</div>
+    <Card className="relative overflow-hidden rounded-lg border-2 border-border/80 bg-secondary-background/40 transition-all duration-200 transform group-hover:-translate-y-0.5 group-hover:border-main/50 group-hover:shadow-lg group-active:scale-95">
+      <div className="flex flex-col items-center justify-center p-3 sm:p-4 min-h-[110px] sm:min-h-[130px]">
+        {/* Icon */}
+        <div className="flex items-center justify-center mb-2 sm:mb-3">
+          <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-background text-main group-hover:text-main/80 transition-colors">
+            <div className="h-5 w-5 sm:h-7 sm:w-7">{icon}</div>
           </div>
         </div>
 
-        {/* Bottom pill */}
-        <div className="mt-6 w-full rounded-xl border border-border bg-background/80 px-4 py-3 backdrop-blur">
-          <div className="text-foreground font-semibold">{title}</div>
-          <div className="text-sm text-foreground/70">{description}</div>
+        {/* Text content */}
+        <div className="text-center space-y-0.5 sm:space-y-1">
+          <div className="text-xs sm:text-sm font-semibold text-foreground leading-tight">{title}</div>
+          <div className="text-[10px] sm:text-xs text-foreground/70 leading-tight px-1">{description}</div>
         </div>
       </div>
     </Card>

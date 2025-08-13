@@ -1,5 +1,5 @@
 import { Address } from "viem";
-import { liskSepolia } from "viem/chains";
+import { liskSepolia, morphHolesky } from "viem/chains";
 import ProfileRegistryABI from "@/contracts/ProfileRegistry.json";
 import RelynkProcessorABI from "@/contracts/RelynkProcessor.json";
 
@@ -16,6 +16,17 @@ const LISK_SEPOLIA_CONTRACTS = {
 } as const;
 
 const SCROLL_SEPOLIA_CONTRACTS = {
+  ProfileRegistry: {
+    address: "0xd8EcF5D6D77bF2852c5e9313F87f31cc99c38dE9" as Address,
+    abi: ProfileRegistryABI,
+  },
+  RelynkProcessor: {
+    address: "0xecB93f03515DE67EA43272797Ea8eDa059985894" as Address,
+    abi: RelynkProcessorABI,
+  },
+} as const;
+
+const MORPH_HOLESKY_CONTRACTS = {
   ProfileRegistry: {
     address: "0xd8EcF5D6D77bF2852c5e9313F87f31cc99c38dE9" as Address,
     abi: ProfileRegistryABI,
@@ -66,6 +77,27 @@ const SCROLL_SEPOLIA_TOKENS = {
   },
 } as const;
 
+const MORPH_HOLESKY_TOKENS = {
+  USDC: {
+    address: "0xBbe362BB261657bbD7202EB623DDBe6ED6a156b6" as Address,
+    symbol: "USDC",
+    name: "Mock USD Coin",
+    decimals: 6,
+  },
+  USDT: {
+    address: "0x94ed9110AA1d38FAFbBe989C4f4E5bF04382B762" as Address,
+    symbol: "USDT",
+    name: "Mock Tether USD",
+    decimals: 6,
+  },
+  IDRX: {
+    address: "0x47B320A4ED999989AE3065Be28B208f177a7546D" as Address,
+    symbol: "IDRX",
+    name: "Mock Indonesian Rupiah Token",
+    decimals: 2,
+  },
+} as const;
+
 // Legacy export for backward compatibility (Lisk Sepolia)
 export const SUPPORTED_TOKENS = LISK_SEPOLIA_TOKENS;
 
@@ -83,6 +115,12 @@ export const SUPPORTED_CHAINS = {
     contracts: SCROLL_SEPOLIA_CONTRACTS,
     tokens: SCROLL_SEPOLIA_TOKENS,
   },
+  morphHolesky: {
+    id: 2810,
+    name: "Morph Holesky",
+    contracts: MORPH_HOLESKY_CONTRACTS,
+    tokens: MORPH_HOLESKY_TOKENS,
+  },
 } as const;
 
 // Get contract configuration for current network
@@ -92,6 +130,8 @@ export function getContractConfig(chainId: number = 4202) {
       return SUPPORTED_CHAINS.liskSepolia.contracts;
     case 534351: // Scroll Sepolia
       return SUPPORTED_CHAINS.scrollSepolia.contracts;
+    case 2810: // Morph Holesky
+      return SUPPORTED_CHAINS.morphHolesky.contracts;
     default:
       console.warn(
         `Unsupported chain ID: ${chainId}, falling back to Lisk Sepolia`
@@ -107,6 +147,8 @@ export function getTokenConfig(chainId: number = 4202) {
       return SUPPORTED_CHAINS.liskSepolia.tokens;
     case 534351: // Scroll Sepolia
       return SUPPORTED_CHAINS.scrollSepolia.tokens;
+    case 2810: // Morph Holesky
+      return SUPPORTED_CHAINS.morphHolesky.tokens;
     default:
       console.warn(`Unsupported chain ID: ${chainId}, falling back to Lisk Sepolia`);
       return SUPPORTED_CHAINS.liskSepolia.tokens;
@@ -120,6 +162,8 @@ export function getChainConfig(chainId: number = 4202) {
       return SUPPORTED_CHAINS.liskSepolia;
     case 534351: // Scroll Sepolia
       return SUPPORTED_CHAINS.scrollSepolia;
+    case 2810: // Morph Holesky
+      return SUPPORTED_CHAINS.morphHolesky;
     default:
       console.warn(`Unsupported chain ID: ${chainId}, falling back to Lisk Sepolia`);
       return SUPPORTED_CHAINS.liskSepolia;

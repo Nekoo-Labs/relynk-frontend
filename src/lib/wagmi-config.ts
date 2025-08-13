@@ -1,9 +1,9 @@
-import { liskSepolia, scrollSepolia } from "viem/chains";
+import { liskSepolia, scrollSepolia, morphHolesky } from "viem/chains";
 import { cookieStorage, createConfig, createStorage, http } from "wagmi";
 
 export function getConfig() {
   return createConfig({
-    chains: [liskSepolia, scrollSepolia],
+    chains: [liskSepolia, scrollSepolia, morphHolesky],
     ssr: true,
     storage: createStorage({
       storage: cookieStorage,
@@ -11,6 +11,7 @@ export function getConfig() {
     transports: {
       [liskSepolia.id]: http(),
       [scrollSepolia.id]: http(),
+      [morphHolesky.id]: http(),
     },
   });
 }

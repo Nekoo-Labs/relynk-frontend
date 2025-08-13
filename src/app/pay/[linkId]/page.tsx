@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { PaymentLink } from "@/types/relynk";
 import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { invalidatePaymentRelatedCaches } from "@/services/api";
+import { useAccount } from "wagmi";
 
 // Function to fetch payment link data from storage
 const fetchPaymentLink = async (
@@ -25,6 +27,7 @@ const fetchPaymentLink = async (
 
 export default function PaymentLinkPage() {
   const params = useParams();
+  const { address } = useAccount();
 
   const linkId = params.linkId as string;
 
@@ -61,7 +64,13 @@ export default function PaymentLinkPage() {
 
   const handlePaymentSuccess = (transactionHash: string) => {
     console.log("Payment successful:", transactionHash);
-    // You could redirect to a success page or show additional UI
+
+    // Invalidate payment-related caches for real-time updates
+    if (address) {
+      setTimeout(() => {
+        invalidatePaymentRelatedCaches(address);
+      }, 2000); // Wait 2 seconds for blockchain to update
+    }
   };
 
   const handlePaymentError = (error: string) => {

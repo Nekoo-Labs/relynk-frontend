@@ -4,12 +4,29 @@ import { useQuery } from "@tanstack/react-query";
 import { useAccount, useChainId } from "wagmi";
 import { useProcessorClient } from "@/services/graphql";
 import { formatUnits } from "viem";
+import { liskSepolia, scrollSepolia, morphHolesky } from "viem/chains";
 import { getTokenConfig } from "@/lib/contracts";
 
-// GraphQL Queries
+// Simple test query to check schema
+const TEST_SCHEMA_QUERY = `
+  query TestSchema {
+    __schema {
+      queryType {
+        fields {
+          name
+          type {
+            name
+          }
+        }
+      }
+    }
+  }
+`;
+
+// GraphQL Queries - Try different possible field names based on different indexing services
 const GET_USER_PAYMENTS = `
   query GetUserPayments($creator: String!, $payer: String!, $first: Int!) {
-    # Payments received by the user
+    # Try Goldsky naming convention
     received: paymentProcesseds(
       where: { creator: $creator }
       first: $first
@@ -27,8 +44,7 @@ const GET_USER_PAYMENTS = `
       timestamp_
       transactionHash_
     }
-    
-    # Payments sent by the user
+
     sent: paymentProcesseds(
       where: { payer: $payer }
       first: $first
@@ -46,8 +62,7 @@ const GET_USER_PAYMENTS = `
       timestamp_
       transactionHash_
     }
-    
-    # Donations received
+
     donationsReceived: donationProcesseds(
       where: { creator: $creator }
       first: $first
@@ -66,8 +81,7 @@ const GET_USER_PAYMENTS = `
       timestamp_
       transactionHash_
     }
-    
-    # Donations sent
+
     donationsSent: donationProcesseds(
       where: { donor: $payer }
       first: $first
@@ -85,6 +99,74 @@ const GET_USER_PAYMENTS = `
       timestampParam
       timestamp_
       transactionHash_
+    }
+  }
+`;
+
+// HyperIndex query format (for Morph Holesky and Scroll Sepolia)
+// Fixed field names based on actual schema - removed block_number and transaction_hash
+const GET_USER_PAYMENTS_HYPERINDEX = `
+  query GetUserPayments($creator: String!, $payer: String!, $first: Int!) {
+    received: RelynkProcessor_PaymentProcessed(
+      where: { creator: { _eq: $creator } }
+      limit: $first
+      order_by: { timestamp: desc }
+    ) {
+      id
+      linkId
+      payer
+      creator
+      linkType
+      amount
+      token
+      timestamp
+    }
+
+    sent: RelynkProcessor_PaymentProcessed(
+      where: { payer: { _eq: $payer } }
+      limit: $first
+      order_by: { timestamp: desc }
+    ) {
+      id
+      linkId
+      payer
+      creator
+      linkType
+      amount
+      token
+      timestamp
+    }
+
+    donationsReceived: RelynkProcessor_DonationProcessed(
+      where: { creator: { _eq: $creator } }
+      limit: $first
+      order_by: { timestamp: desc }
+    ) {
+      id
+      linkId
+      donor
+      creator
+      amount
+      platformFee
+      token
+      message
+      timestamp
+    }
+
+    donationsSent: RelynkProcessor_DonationProcessed(
+      where: { donor: { _eq: $payer } }
+      limit: $first
+      order_by: { timestamp: desc }
+    ) {
+      id
+      linkId
+      donor
+      creator
+      amount
+      platformFee
+      token
+      message
+      timestamp
     }
   }
 `;
@@ -132,60 +214,40 @@ export function usePayments() {
     return parseFloat(formatted).toFixed(2);
   };
 
-  const processPaymentData = (data: {
-    received?: Array<{
-      id: string;
-      amount: string;
-      token: string;
-      payer: string;
-      creator: string;
-      transactionHash_: string;
-      timestamp_: string;
-      linkId: string;
-      linkTitle: string;
-      linkType: string;
-    }>;
-    sent?: Array<{
-      id: string;
-      amount: string;
-      token: string;
-      payer: string;
-      creator: string;
-      transactionHash_: string;
-      timestamp_: string;
-      linkId: string;
-      linkTitle: string;
-      linkType: string;
-    }>;
-    donationsReceived?: Array<{
-      id: string;
-      amount: string;
-      token: string;
-      payer: string;
-      creator: string;
-      transactionHash_: string;
-      timestamp_: string;
-      linkId: string;
-      linkTitle: string;
-      message?: string;
-    }>;
-    donationsSent?: Array<{
-      id: string;
-      amount: string;
-      token: string;
-      payer: string;
-      creator: string;
-      transactionHash_: string;
-      timestamp_: string;
-      linkId: string;
-      linkTitle: string;
-      message?: string;
-    }>;
-  }): PaymentTransaction[] => {
+  // Helper function to normalize field names from different indexers
+  const normalizePaymentData = (item: any) => ({
+    id: item.id,
+    amount: item.amount,
+    token: item.token,
+    payer: item.payer,
+    creator: item.creator,
+    // Handle different field naming conventions
+    transactionHash_: item.transactionHash_ || item.transaction_hash || item.transaction_hash_ || item.id, // Fallback to id if no tx hash
+    timestamp_: item.timestamp_ || item.timestamp,
+    linkId: item.linkId || item.link_id,
+    linkType: item.linkType || item.link_type,
+  });
+
+  const normalizeDonationData = (item: any) => ({
+    id: item.id,
+    amount: item.amount,
+    token: item.token,
+    donor: item.donor,
+    creator: item.creator,
+    // Handle different field naming conventions
+    transactionHash_: item.transactionHash_ || item.transaction_hash || item.transaction_hash_ || item.id, // Fallback to id if no tx hash
+    timestamp_: item.timestamp_ || item.timestamp,
+    linkId: item.linkId || item.link_id,
+    message: item.message,
+    platformFee: item.platformFee || item.platform_fee,
+  });
+
+  const processPaymentData = (data: any): PaymentTransaction[] => {
     const transactions: PaymentTransaction[] = [];
 
     // Process received payments
-    data.received?.forEach((payment) => {
+    data.received?.forEach((rawPayment: any) => {
+      const payment = normalizePaymentData(rawPayment);
       const token = getTokenInfo(payment.token);
       const formattedAmount = formatTokenAmount(payment.amount, payment.token);
 
@@ -204,12 +266,13 @@ export function usePayments() {
         ).toLocaleString(),
         linkTitle: `Payment Link ${payment.linkId.slice(-8)}`,
         linkId: payment.linkId,
-        linkType: parseInt(payment.linkType) || 0,
+        linkType: payment.linkType,
       });
     });
 
     // Process sent payments
-    data.sent?.forEach((payment) => {
+    data.sent?.forEach((rawPayment: any) => {
+      const payment = normalizePaymentData(rawPayment);
       const token = getTokenInfo(payment.token);
       const formattedAmount = formatTokenAmount(payment.amount, payment.token);
 
@@ -228,12 +291,13 @@ export function usePayments() {
         ).toLocaleString(),
         linkTitle: `Payment Link ${payment.linkId.slice(-8)}`,
         linkId: payment.linkId,
-        linkType: parseInt(payment.linkType) || 0,
+        linkType: payment.linkType,
       });
     });
 
     // Process received donations
-    data.donationsReceived?.forEach((donation) => {
+    data.donationsReceived?.forEach((rawDonation: any) => {
+      const donation = normalizeDonationData(rawDonation);
       const token = getTokenInfo(donation.token);
       const formattedAmount = formatTokenAmount(
         donation.amount,
@@ -246,7 +310,7 @@ export function usePayments() {
         amount: `$${formattedAmount}`,
         formattedAmount,
         currency: token.symbol,
-        from: donation.payer,
+        from: donation.donor,
         to: donation.creator,
         status: "completed",
         txHash: donation.transactionHash_,
@@ -260,7 +324,8 @@ export function usePayments() {
     });
 
     // Process sent donations
-    data.donationsSent?.forEach((donation) => {
+    data.donationsSent?.forEach((rawDonation: any) => {
+      const donation = normalizeDonationData(rawDonation);
       const token = getTokenInfo(donation.token);
       const formattedAmount = formatTokenAmount(
         donation.amount,
@@ -273,7 +338,7 @@ export function usePayments() {
         amount: `$${formattedAmount}`,
         formattedAmount,
         currency: token.symbol,
-        from: donation.payer,
+        from: donation.donor,
         to: donation.creator,
         status: "completed",
         txHash: donation.transactionHash_,
@@ -345,11 +410,65 @@ export function usePayments() {
         };
       }
 
-      const data = await processorClient.request(GET_USER_PAYMENTS, {
-        creator: address.toLowerCase(),
-        payer: address.toLowerCase(),
-        first: 100, // Fetch last 100 transactions
-      });
+      // Try different query formats based on the network/indexer
+      let data;
+
+      // Determine which query format to use based on chain ID
+      const isGoldsky = chainId === liskSepolia.id; // Lisk Sepolia uses Goldsky
+      const isHyperIndex = chainId === scrollSepolia.id || chainId === morphHolesky.id; // Scroll Sepolia or Morph Holesky use HyperIndex
+
+
+
+      try {
+        if (isGoldsky) {
+          console.log("Using Goldsky format for Lisk Sepolia");
+          // Use Goldsky format for Lisk Sepolia
+          data = await processorClient.request(GET_USER_PAYMENTS, {
+            creator: address.toLowerCase(),
+            payer: address.toLowerCase(),
+            first: 100,
+          });
+
+        } else if (isHyperIndex) {
+
+          // Use HyperIndex format for Scroll Sepolia and Morph Holesky
+          data = await processorClient.request(GET_USER_PAYMENTS_HYPERINDEX, {
+            creator: address.toLowerCase(),
+            payer: address.toLowerCase(),
+            first: 100,
+          });
+
+        } else {
+          // Default to Goldsky format and fallback to HyperIndex
+          try {
+            data = await processorClient.request(GET_USER_PAYMENTS, {
+              creator: address.toLowerCase(),
+              payer: address.toLowerCase(),
+              first: 100,
+            });
+          } catch (goldSkyError) {
+
+            data = await processorClient.request(GET_USER_PAYMENTS_HYPERINDEX, {
+              creator: address.toLowerCase(),
+              payer: address.toLowerCase(),
+              first: 100,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Payment query failed:", error instanceof Error ? error.message : String(error));
+
+        // Return empty data instead of throwing to prevent app crash
+        return {
+          payments: [],
+          stats: {
+            totalReceived: "$0.00",
+            totalSent: "$0.00",
+            pending: "$0.00",
+            thisMonth: "$0.00",
+          },
+        };
+      }
 
       const processedPayments = processPaymentData(data as Parameters<typeof processPaymentData>[0]);
       const calculatedStats = calculateStats(processedPayments);
@@ -360,9 +479,23 @@ export function usePayments() {
       };
     },
     enabled: !!address, // Only run query when address is available
-    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    retry: 3, // Retry failed requests 3 times
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
+    refetchOnWindowFocus: false, // Disable aggressive refetching
+    refetchOnMount: false, // Only refetch if stale
+    // Remove refetchInterval to stop constant polling
+    retry: (failureCount, error) => {
+      // Don't retry if it's a GraphQL schema error
+      if (error instanceof Error && (
+        error.message.includes("field") && error.message.includes("not found") ||
+        error.message.includes("Cannot query field") ||
+        error.message.includes("validation-failed")
+      )) {
+        console.log("Schema error detected, not retrying:", error.message);
+        return false;
+      }
+      return failureCount < 1; // Reduce retries to prevent spam
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 

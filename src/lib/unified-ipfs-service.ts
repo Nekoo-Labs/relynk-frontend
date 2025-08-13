@@ -7,10 +7,27 @@ import {
 import { pinata } from "./pinata";
 import { Address } from "viem";
 import { api } from "@/services/api";
-import { SUPPORTED_TOKENS } from "./contracts";
+import { getTokenConfig, SUPPORTED_CHAINS } from "./contracts";
 
-// Create array version for easier iteration
-const SUPPORTED_TOKENS_ARRAY = Object.values(SUPPORTED_TOKENS);
+// Create array version for easier iteration - get all tokens from all supported chains
+const getAllSupportedTokens = () => {
+  const allTokens: Array<{ address: Address; symbol: string; decimals: number; chainId: number }> = [];
+
+  Object.values(SUPPORTED_CHAINS).forEach(chain => {
+    Object.values(chain.tokens).forEach(token => {
+      allTokens.push({
+        address: token.address,
+        symbol: token.symbol,
+        decimals: token.decimals,
+        chainId: chain.id
+      });
+    });
+  });
+
+  return allTokens;
+};
+
+const SUPPORTED_TOKENS_ARRAY = getAllSupportedTokens();
 
 /**
  * Unified IPFS Service for Relynk
@@ -365,20 +382,99 @@ export class UnifiedIPFSService {
 
     // Get token symbol from SUPPORTED_TOKENS configuration
     const getTokenSymbol = (tokenAddress: Address): string => {
+      console.log("getTokenSymbol - Looking up address:", tokenAddress);
+
+      // First try to find in the global array
       const token = SUPPORTED_TOKENS_ARRAY.find(
         t => t.address.toLowerCase() === tokenAddress.toLowerCase()
       );
-      return token?.symbol || "UNKNOWN";
+
+      if (token) {
+        console.log("getTokenSymbol - Found in global array:", token.symbol);
+        return token.symbol;
+      }
+
+      // If not found, try each chain's token config
+      for (const chain of Object.values(SUPPORTED_CHAINS)) {
+        const chainToken = Object.values(chain.tokens).find(
+          t => t.address.toLowerCase() === tokenAddress.toLowerCase()
+        );
+        if (chainToken) {
+          console.log(`getTokenSymbol - Found in ${chain.name}:`, chainToken.symbol);
+          return chainToken.symbol;
+        }
+      }
+
+      // If still not found, check if it's a known token address pattern
+      // This is a fallback for common token addresses
+      const knownTokenPatterns = {
+        'usdc': /usdc/i,
+        'usdt': /usdt/i,
+        'idrx': /idrx/i,
+      };
+
+      // Check if the address contains known patterns (this is a heuristic)
+      for (const [symbol, pattern] of Object.entries(knownTokenPatterns)) {
+        if (pattern.test(tokenAddress)) {
+          console.log(`getTokenSymbol - Pattern match for ${symbol.toUpperCase()}`);
+          return symbol.toUpperCase();
+        }
+      }
+
+      console.warn("getTokenSymbol - Token not found, returning UNKNOWN for address:", tokenAddress);
+      return "UNKNOWN";
     };
 
     // Get token decimals for proper formatting
     const getTokenDecimals = (symbol: string): number => {
+      console.log("getTokenDecimals - Looking up symbol:", symbol);
+
+      // First try to find in the global array
       const token = SUPPORTED_TOKENS_ARRAY.find(t => t.symbol === symbol);
-      return token?.decimals || 18; // Default to 18 decimals for ETH and unknown tokens
+
+      if (token) {
+        console.log("getTokenDecimals - Found in global array:", token.decimals);
+        return token.decimals;
+      }
+
+      // If not found, try each chain's token config
+      for (const chain of Object.values(SUPPORTED_CHAINS)) {
+        const chainToken = Object.values(chain.tokens).find(
+          t => t.symbol === symbol
+        );
+        if (chainToken) {
+          console.log(`getTokenDecimals - Found in ${chain.name}:`, chainToken.decimals);
+          return chainToken.decimals;
+        }
+      }
+
+      // Default decimals for known tokens
+      const defaultDecimals: Record<string, number> = {
+        'USDC': 6,
+        'USDT': 6,
+        'IDRX': 2,
+        'ETH': 18,
+        'WETH': 18,
+      };
+
+      const decimals = defaultDecimals[symbol] || 18;
+      console.log(`getTokenDecimals - Using default decimals for ${symbol}:`, decimals);
+      return decimals;
     };
 
-    const tokenSymbol = getTokenSymbol(linkData.token);
-    const decimals = getTokenDecimals(tokenSymbol);
+    // Try to get token info from metadata first (more reliable for cross-chain)
+    let tokenSymbol = metadata.tokenSymbol;
+    let decimals = metadata.tokenDecimals;
+
+    // Fallback to address lookup if not in metadata
+    if (!tokenSymbol) {
+      tokenSymbol = getTokenSymbol(linkData.token);
+    }
+    if (!decimals) {
+      decimals = getTokenDecimals(tokenSymbol);
+    }
+
+    console.log("convertToPaymentLink - Final token info:", { tokenSymbol, decimals });
     const formattedAmount = (
       Number(linkData.amount) / Math.pow(10, decimals)
     ).toString();
