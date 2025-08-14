@@ -11,6 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { XellarKitProvider, defaultConfig, darkTheme } from "@xellar/kit";
 import { liskSepolia, scrollSepolia, morphHolesky } from "viem/chains";
+import { celoSepolia } from "@/lib/wagmi-config";
 import { SessionProvider } from "next-auth/react";
 import { queryClient } from "@/services/api";
 import { NetworkAlert } from "@/components/ui/network-alert";
@@ -27,7 +28,7 @@ const config = defaultConfig({
   storage: createStorage({
     storage: cookieStorage,
   }),
-  chains: [liskSepolia, scrollSepolia, morphHolesky],
+  chains: [liskSepolia, scrollSepolia, morphHolesky, celoSepolia],
 }) as Config;
 
 export function Web3Provider({
