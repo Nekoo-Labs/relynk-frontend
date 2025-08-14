@@ -17,6 +17,24 @@ export const linkFormSchema = z
       .max(500, "Description must be less than 500 characters")
       .optional(),
 
+    // Custom slug for the link
+    customSlug: z
+      .string()
+      .optional()
+      .refine((val) => {
+        if (!val) return true; // Optional field
+        return /^[a-z0-9_-]+$/.test(val);
+      }, "Slug must contain only lowercase letters, numbers, hyphens, and underscores")
+      .refine((val) => {
+        if (!val) return true; // Optional field
+        return val.length >= 3 && val.length <= 50;
+      }, "Slug must be between 3 and 50 characters")
+      .refine((val) => {
+        if (!val) return true; // Optional field
+        const reservedSlugs = ["api", "admin", "dashboard", "pay", "payment", "link", "links", "user", "users", "profile", "profiles"];
+        return !reservedSlugs.includes(val.toLowerCase());
+      }, "This slug is reserved and cannot be used"),
+
     // Link type selection
     linkType: z.nativeEnum(LinkType, {
       errorMap: () => ({ message: "Please select a valid link type" }),
@@ -126,6 +144,25 @@ export const linkFormUISchema = z
   .object({
     title: z.string().min(1, "Title is required").max(100, "Title too long"),
     description: z.string().max(500, "Description too long").optional(),
+    customSlug: z
+      .string()
+      .optional()
+      .refine((val) => {
+        if (!val) return true; // Optional field
+        // Slug validation: only lowercase letters, numbers, and hyphens
+        const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+        return slugRegex.test(val);
+      }, "Slug must contain only lowercase letters, numbers, and hyphens")
+      .refine((val) => {
+        if (!val) return true;
+        return val.length >= 3 && val.length <= 50;
+      }, "Slug must be between 3 and 50 characters")
+      .refine((val) => {
+        if (!val) return true;
+        // Prevent reserved words
+        const reserved = ['api', 'admin', 'dashboard', 'pay', 'payment', 'www', 'app', 'help', 'support'];
+        return !reserved.includes(val.toLowerCase());
+      }, "This slug is reserved and cannot be used"),
     linkType: z.enum(["payment", "donation", "product", "content"], {
       errorMap: () => ({ message: "Please select a link type" }),
     }),
@@ -290,6 +327,7 @@ export function transformUIDataToContractData(
   return {
     title: uiData.title,
     description: uiData.description || "",
+    customSlug: uiData.customSlug, // Include custom slug
     linkType: linkTypeMap[uiData.linkType],
     amountType: getAmountType(),
     usageType: getUsageType(),

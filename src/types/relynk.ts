@@ -339,6 +339,7 @@ export interface CreateLinkFormData {
   // Basic info
   title: string;
   description: string;
+  customSlug?: string; // Optional custom slug for the link
   linkType: LinkType;
   amountType: AmountType;
   usageType: UsageType;
