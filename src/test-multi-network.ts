@@ -4,7 +4,8 @@
  * for different networks.
  */
 
-import { liskSepolia, scrollSepolia } from 'viem/chains';
+import { liskSepolia, scrollSepolia, morphHolesky } from 'viem/chains';
+import { celoSepolia } from '@/lib/wagmi-config';
 import { getProfileClient, getProcessorClient } from '@/services/graphql';
 import { getContractConfig, getTokenConfig, getChainConfig } from '@/lib/contracts';
 
@@ -42,6 +43,38 @@ export function testMultiNetworkConfig() {
   console.log('  RelynkProcessor Address:', scrollContracts.RelynkProcessor.address);
   console.log('  Supported Tokens:', Object.keys(scrollTokens));
   console.log('  Chain Name:', scrollChain.name);
+  console.log('');
+
+  // Test Morph Holesky
+  console.log('🔗 Morph Holesky (Chain ID: 2810)');
+  const morphProfileClient = getProfileClient(morphHolesky.id);
+  const morphProcessorClient = getProcessorClient(morphHolesky.id);
+  const morphContracts = getContractConfig(morphHolesky.id);
+  const morphTokens = getTokenConfig(morphHolesky.id);
+  const morphChain = getChainConfig(morphHolesky.id);
+
+  console.log('  Profile Client URL:', (morphProfileClient as unknown as { url?: string }).url);
+  console.log('  Processor Client URL:', (morphProcessorClient as unknown as { url?: string }).url);
+  console.log('  ProfileRegistry Address:', morphContracts.ProfileRegistry.address);
+  console.log('  RelynkProcessor Address:', morphContracts.RelynkProcessor.address);
+  console.log('  Supported Tokens:', Object.keys(morphTokens));
+  console.log('  Chain Name:', morphChain.name);
+  console.log('');
+
+  // Test Celo Sepolia
+  console.log('🔗 Celo Sepolia (Chain ID: 11142220)');
+  const celoProfileClient = getProfileClient(celoSepolia.id);
+  const celoProcessorClient = getProcessorClient(celoSepolia.id);
+  const celoContracts = getContractConfig(celoSepolia.id);
+  const celoTokens = getTokenConfig(celoSepolia.id);
+  const celoChain = getChainConfig(celoSepolia.id);
+
+  console.log('  Profile Client URL:', (celoProfileClient as unknown as { url?: string }).url);
+  console.log('  Processor Client URL:', (celoProcessorClient as unknown as { url?: string }).url);
+  console.log('  ProfileRegistry Address:', celoContracts.ProfileRegistry.address);
+  console.log('  RelynkProcessor Address:', celoContracts.RelynkProcessor.address);
+  console.log('  Supported Tokens:', Object.keys(celoTokens));
+  console.log('  Chain Name:', celoChain.name);
   console.log('');
 
   // Test unsupported chain (should fallback to Lisk Sepolia)
