@@ -4,7 +4,7 @@
  * for different networks.
  */
 
-import { liskSepolia, scrollSepolia, morphHolesky } from 'viem/chains';
+import { liskSepolia, scrollSepolia, morphHolesky, mantleSepoliaTestnet } from 'viem/chains';
 import { celoSepolia } from '@/lib/wagmi-config';
 import { getProfileClient, getProcessorClient } from '@/services/graphql';
 import { getContractConfig, getTokenConfig, getChainConfig } from '@/lib/contracts';
@@ -76,6 +76,23 @@ export function testMultiNetworkConfig() {
   console.log('  Supported Tokens:', Object.keys(celoTokens));
   console.log('  Chain Name:', celoChain.name);
   console.log('');
+
+    // Test Mantle Sepolia
+  console.log('🔗 Celo Sepolia (Chain ID: 11142220)');
+  const mantleProfileClient = getProfileClient(mantleSepoliaTestnet.id);
+  const mantleProcessorClient = getProcessorClient(mantleSepoliaTestnet.id);
+  const mantleContracts = getContractConfig(mantleSepoliaTestnet.id);
+  const mantleTokens = getTokenConfig(mantleSepoliaTestnet.id);
+  const mantleChain = getChainConfig(mantleSepoliaTestnet.id);
+
+  console.log('  Profile Client URL:', (mantleProfileClient as unknown as { url?: string }).url);
+  console.log('  Processor Client URL:', (mantleProcessorClient as unknown as { url?: string }).url);
+  console.log('  ProfileRegistry Address:', mantleContracts.ProfileRegistry.address);
+  console.log('  RelynkProcessor Address:', mantleContracts.RelynkProcessor.address);
+  console.log('  Supported Tokens:', Object.keys(mantleTokens));
+  console.log('  Chain Name:', mantleChain.name);
+  console.log('');
+
 
   // Test unsupported chain (should fallback to Lisk Sepolia)
   console.log('🔗 Unsupported Chain (Chain ID: 999999)');

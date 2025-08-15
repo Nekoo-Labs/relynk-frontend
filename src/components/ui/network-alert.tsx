@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useAccount } from "wagmi";
-import { liskSepolia, scrollSepolia, morphHolesky } from "viem/chains";
+import { liskSepolia, scrollSepolia, morphHolesky, mantleSepoliaTestnet } from "viem/chains";
 import { celoSepolia } from "@/lib/wagmi-config";
 import { Button } from "./button";
 import { SwitchNetwork } from "./switch-network";
 
 // Keep this in sync with switch-network.tsx
-const APP_SUPPORTED_CHAINS = [liskSepolia, scrollSepolia, morphHolesky, celoSepolia] as const;
+const APP_SUPPORTED_CHAINS = [liskSepolia, scrollSepolia, morphHolesky, celoSepolia, mantleSepoliaTestnet] as const;
 
 export function NetworkAlert() {
   const { isConnected, chain: accountChain } = useAccount();
