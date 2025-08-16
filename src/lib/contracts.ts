@@ -49,6 +49,17 @@ const CELO_SEPOLIA_CONTRACTS = {
   },
 } as const;
 
+const MANTLE_SEPOLIA_CONTRACTS = {
+  ProfileRegistry: {
+    address: "0xd8EcF5D6D77bF2852c5e9313F87f31cc99c38dE9" as Address,
+    abi: ProfileRegistryABI,
+  },
+  RelynkProcessor: {
+    address: "0xecB93f03515DE67EA43272797Ea8eDa059985894" as Address,
+    abi: RelynkProcessorABI,
+  },
+} as const;
+
 // Legacy export for backward compatibility (Lisk Sepolia)
 export const CONTRACTS = LISK_SEPOLIA_CONTRACTS;
 
@@ -131,6 +142,27 @@ const CELO_SEPOLIA_TOKENS = {
   },
 } as const;
 
+const MANTLE_SEPOLIA_TOKENS = {
+  USDC: {
+    address: "0xBbe362BB261657bbD7202EB623DDBe6ED6a156b6" as Address,
+    symbol: "USDC",
+    name: "Mock USD Coin",
+    decimals: 6,
+  },
+  USDT: {
+    address: "0x94ed9110AA1d38FAFbBe989C4f4E5bF04382B762" as Address,
+    symbol: "USDT",
+    name: "Mock Tether USD",
+    decimals: 6,
+  },
+  IDRX: {
+    address: "0x47B320A4ED999989AE3065Be28B208f177a7546D" as Address,
+    symbol: "IDRX",
+    name: "Mock Indonesian Rupiah Token",
+    decimals: 2,
+  },
+} as const;
+
 // Legacy export for backward compatibility (Lisk Sepolia)
 export const SUPPORTED_TOKENS = LISK_SEPOLIA_TOKENS;
 
@@ -160,6 +192,12 @@ export const SUPPORTED_CHAINS = {
     contracts: CELO_SEPOLIA_CONTRACTS,
     tokens: CELO_SEPOLIA_TOKENS,
   },
+   mantleSepoliaTestnet: {
+    id: 5003,
+    name: "Mantle Sepolia Testnet",
+    contracts: MANTLE_SEPOLIA_CONTRACTS,
+    tokens: MANTLE_SEPOLIA_TOKENS,
+  }
 } as const;
 
 // Get contract configuration for current network
@@ -173,6 +211,8 @@ export function getContractConfig(chainId: number = 4202) {
       return SUPPORTED_CHAINS.morphHolesky.contracts;
     case 11142220: // Celo Sepolia
       return SUPPORTED_CHAINS.celoSepolia.contracts;
+    case 5003: // Mantle Sepolia
+      return SUPPORTED_CHAINS.mantleSepoliaTestnet.contracts;
     default:
       console.warn(
         `Unsupported chain ID: ${chainId}, falling back to Lisk Sepolia`
@@ -192,6 +232,8 @@ export function getTokenConfig(chainId: number = 4202) {
       return SUPPORTED_CHAINS.morphHolesky.tokens;
     case 11142220: // Celo Sepolia
       return SUPPORTED_CHAINS.celoSepolia.tokens;
+    case 5003:
+      return SUPPORTED_CHAINS.mantleSepoliaTestnet.tokens;
     default:
       console.warn(`Unsupported chain ID: ${chainId}, falling back to Lisk Sepolia`);
       return SUPPORTED_CHAINS.liskSepolia.tokens;
@@ -209,6 +251,8 @@ export function getChainConfig(chainId: number = 4202) {
       return SUPPORTED_CHAINS.morphHolesky;
     case 11142220: // Celo Sepolia
       return SUPPORTED_CHAINS.celoSepolia;
+    case 5003: // Mantle Sepolia
+      return SUPPORTED_CHAINS.mantleSepoliaTestnet;
     default:
       console.warn(`Unsupported chain ID: ${chainId}, falling back to Lisk Sepolia`);
       return SUPPORTED_CHAINS.liskSepolia;

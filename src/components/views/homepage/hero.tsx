@@ -48,27 +48,27 @@ export default function HeroSection() {
 
 
   return (
-    <section className="relative min-h-[600px] lg:min-h-[700px] flex flex-col pt-[calc(4rem+40px)] pb-20 items-center overflow-hidden mt-8">
+  <section className="relative min-h-[600px] lg:min-h-[700px] flex flex-col pt-[calc(4rem+40px)] pb-20 items-center overflow-hidden mt-8 w-full">
       <motion.div style={{ y }} className="absolute inset-0">
         <GridPattern className="opacity-30 z-[-1]" />
       </motion.div>
 
       <motion.div
         ref={heroRef}
-        className="relative max-w-4xl mx-auto px-6 md:px-8 lg:px-12 z-10"
+        className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 z-10"
         initial="initial"
         animate={heroInView ? "animate" : "initial"}
         variants={staggerContainer}
       >
-        <motion.div className="space-y-8 text-center" variants={fadeInUp}>
+  <motion.div className="space-y-8 text-center" variants={fadeInUp}>
           <motion.div className="relative">
             <motion.h1
-              className="text-5xl lg:text-7xl font-bold relative leading-tight"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold relative leading-tight"
               variants={fadeInUp}
             >
                The Future of
               <br />
-              <span className="text-6xl">
+              <span className="text-4xl sm:text-5xl md:text-6xl">
                 <motion.span
                   className="text-main relative"
                   whileHover={{ scale: 1.1 }}
@@ -100,7 +100,7 @@ export default function HeroSection() {
             </motion.div>
           </motion.div>
 
-          <motion.h2 className="text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto leading-relaxed">
+          <motion.h2 className="text-base sm:text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto leading-relaxed">
             <motion.span
               className="font-bold text-main"
               whileHover={{ scale: 1.05 }}
@@ -111,9 +111,9 @@ export default function HeroSection() {
           </motion.h2>
         </motion.div>
 
-        <motion.div className="relative group w-full mt-16" variants={fadeInUp}>
+  <motion.div className="relative group w-full mt-16 flex flex-col sm:flex-row sm:justify-center sm:items-stretch gap-4" variants={fadeInUp}>
           <motion.div
-            className="relative"
+            className="relative w-full sm:w-auto"
             whileHover="hover"
             initial="rest"
             animate="rest"
@@ -174,7 +174,7 @@ export default function HeroSection() {
             </motion.div>
 
             <motion.div
-              className="absolute top-0 -translate-x-1/2 left-1/2 z-[-1]"
+              className="absolute top-0 -translate-x-1/2 left-1/2 z-[-1] hidden sm:block"
               variants={{
                 rest: { rotate: -8, scale: 0.95, x: "-40%" },
                 hover: { rotate: -8, scale: 1, x: "-60%" },
@@ -212,7 +212,7 @@ export default function HeroSection() {
               </Card>
             </motion.div>
             <motion.div
-              className="absolute top-0 -translate-x-1/2 left-1/2 z-[-2] scale-105"
+              className="absolute top-0 -translate-x-1/2 left-1/2 z-[-2] scale-105 hidden sm:block"
               variants={{
                 rest: { rotate: 12, scale: 0.95, x: "25%" },
                 hover: { scale: 1, x: "40%" },
@@ -254,7 +254,7 @@ export default function HeroSection() {
 
         {/* Username Call-to-Action Section */}
         <motion.div
-          className="relative mt-20 mb-20 text-center px-6"
+          className="relative mt-20 mb-20 text-center px-2 sm:px-6"
           variants={fadeInUp}
         >
           <motion.div
@@ -282,21 +282,21 @@ export default function HeroSection() {
             {/* Main Text */}
             <motion.div className="space-y-4" variants={fadeInUp}>
               <motion.h3
-                className="text-4xl lg:text-5xl font-bold text-foreground/80"
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground/80"
                 animate={{ opacity: [0.7, 1, 0.7] }}
                 transition={{ duration: 4, repeat: Infinity }}
               >
                 Claim your
               </motion.h3>
               <motion.h3
-                className="text-5xl lg:text-6xl font-bold text-main"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-main"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 digital identity
               </motion.h3>
               <motion.p
-                className="text-xl text-foreground/60 max-w-lg mx-auto leading-relaxed"
+                className="text-base sm:text-lg md:text-xl text-foreground/60 max-w-lg mx-auto leading-relaxed"
                 variants={fadeInUp}
               >
                 Get your personalized rely.ink link and start earning today
@@ -315,19 +315,18 @@ export default function HeroSection() {
                 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center bg-main/10 rounded-2xl px-6 py-4 border border-main/20">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="flex items-center bg-main/10 rounded-2xl px-6 py-4 border border-main/20 justify-center sm:justify-start">
                     <span className="text-main font-bold text-xl">
                       rely.ink/
                     </span>
                   </div>
-
                   <input
                     type="text"
                     placeholder="your-username"
                     value={username}
                     onChange={(e) => handleUsernameChange(e.target.value)}
-                    className="flex-1 bg-transparent border-0 outline-none text-foreground font-medium text-xl placeholder:text-foreground/40 px-4 py-4"
+                    className="flex-1 bg-transparent border-0 outline-none text-foreground font-medium text-xl placeholder:text-foreground/40 px-4 py-4 min-w-0 text-center sm:text-left"
                     maxLength={20}
                   />
 
@@ -335,7 +334,7 @@ export default function HeroSection() {
                   <ConnectButton.Custom>
                     {({ isConnected, openConnectModal }) => (
                       <Button
-                        className="bg-main text-white hover:bg-main/90 text-xl font-semibold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 min-w-[140px]"
+                        className="bg-main text-white hover:bg-main/90 font-semibold px-6 py-4 sm:py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto sm:min-w-[120px]"
                         onClick={() => {
                           if (isConnected) {
                             if (username.trim()) {

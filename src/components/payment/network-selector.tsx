@@ -53,23 +53,27 @@ export function NetworkSelector({
   const scrollSepoliaTokens = getTokenConfig(534351);
   const morphHoleskyTokens = getTokenConfig(2810);
   const celoSepoliaTokens = getTokenConfig(11142220);
+  const mantleSepoliaTokens = getTokenConfig(5003);
 
   const liskSepoliaTokenConfig = Object.values(liskSepoliaTokens).find(t => t.symbol === tokenSymbol);
   const scrollSepoliaTokenConfig = Object.values(scrollSepoliaTokens).find(t => t.symbol === tokenSymbol);
   const morphHoleskyTokenConfig = Object.values(morphHoleskyTokens).find(t => t.symbol === tokenSymbol);
   const celoSepoliaTokenConfig = Object.values(celoSepoliaTokens).find(t => t.symbol === tokenSymbol);
+  const mantleSepoliaTokenConfig = Object.values(mantleSepoliaTokens).find(t => t.symbol === tokenSymbol);
 
   // Get allowances for each chain
   const { data: liskSepoliaAllowance } = useTokenAllowance(liskSepoliaTokenConfig?.address as Address, 4202);
   const { data: scrollSepoliaAllowance } = useTokenAllowance(scrollSepoliaTokenConfig?.address as Address, 534351);
   const { data: morphHoleskyAllowance } = useTokenAllowance(morphHoleskyTokenConfig?.address as Address, 2810);
   const { data: celoSepoliaAllowance } = useTokenAllowance(celoSepoliaTokenConfig?.address as Address, 11142220);
+  const { data: mantleSepoliaAllowance } = useTokenAllowance(mantleSepoliaTokenConfig?.address as Address, 5003);
 
   // Get approval states for each chain
   const liskSepoliaApprovalState = getApprovalState(4202, liskSepoliaTokenConfig?.address);
   const scrollSepoliaApprovalState = getApprovalState(534351, scrollSepoliaTokenConfig?.address);
   const morphHoleskyApprovalState = getApprovalState(2810, morphHoleskyTokenConfig?.address);
   const celoSepoliaApprovalState = getApprovalState(11142220, celoSepoliaTokenConfig?.address);
+  const mantleSepoliaApprovalState = getApprovalState(5003, mantleSepoliaTokenConfig?.address);
 
   // Create chain data lookup
   const chainDataMap = {
@@ -77,6 +81,7 @@ export function NetworkSelector({
     534351: { allowance: scrollSepoliaAllowance, approvalState: scrollSepoliaApprovalState, tokenConfig: scrollSepoliaTokenConfig },
     2810: { allowance: morphHoleskyAllowance, approvalState: morphHoleskyApprovalState, tokenConfig: morphHoleskyTokenConfig },
     11142220: { allowance: celoSepoliaAllowance, approvalState: celoSepoliaApprovalState, tokenConfig: celoSepoliaTokenConfig },
+    5003: { allowance: mantleSepoliaAllowance, approvalState: mantleSepoliaApprovalState, tokenConfig: mantleSepoliaTokenConfig },
   };
 
   const handleNetworkSwitch = async (targetChainId: number) => {

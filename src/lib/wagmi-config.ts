@@ -1,4 +1,4 @@
-import { liskSepolia, scrollSepolia, morphHolesky } from "viem/chains";
+import { liskSepolia, scrollSepolia, morphHolesky, mantleSepoliaTestnet } from "viem/chains";
 import { cookieStorage, createConfig, createStorage, http } from "wagmi";
 import { defineChain } from "viem";
 
@@ -27,7 +27,7 @@ export const celoSepolia = defineChain({
 
 export function getConfig() {
   return createConfig({
-    chains: [liskSepolia, scrollSepolia, morphHolesky, celoSepolia],
+    chains: [liskSepolia, scrollSepolia, morphHolesky, celoSepolia, mantleSepoliaTestnet],
     ssr: true,
     storage: createStorage({
       storage: cookieStorage,
@@ -37,6 +37,7 @@ export function getConfig() {
       [scrollSepolia.id]: http(),
       [morphHolesky.id]: http(),
       [celoSepolia.id]: http("https://forno.celo-sepolia.celo-testnet.org"),
+      [mantleSepoliaTestnet.id]: http()
     },
   });
 }
