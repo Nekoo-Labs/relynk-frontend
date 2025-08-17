@@ -18,6 +18,7 @@ import {
   LinkMetadata,
 } from "@/types/relynk";
 import { getContractConfig, getTokenConfig } from "@/lib/contracts";
+import { UnifiedIPFSService } from "@/lib/unified-ipfs-service";
 
 export function useRelynkProcessor() {
   const { address } = useAccount();
@@ -247,7 +248,17 @@ export function useRelynkProcessor() {
   };
 
   // Helper functions
-  const generateLinkId = (): string => {
+  const generateLinkId = async (customSlug?: string): Promise<string> => {
+    if (customSlug && customSlug.trim()) {
+      // Check if custom slug already exists
+      const existingLink = await UnifiedIPFSService.getPaymentLink(customSlug);
+      if (existingLink) {
+        throw new Error(`The slug "${customSlug}" is already taken. Please choose a different one.`);
+      }
+      return customSlug;
+    }
+    
+    // Generate default link ID
     return `link_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   };
 
@@ -274,7 +285,7 @@ export function useRelynkProcessor() {
       );
     }
 
-    const linkId = generateLinkId();
+    const linkId = await generateLinkId(formData.customSlug);
     const expiresTimestamp = BigInt(
       Math.floor(Date.now() / 1000) + formData.expiresIn * 3600
     );

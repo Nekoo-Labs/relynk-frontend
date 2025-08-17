@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -92,7 +93,9 @@ export function PaymentProcessor({
   const [isCompleted, setIsCompleted] = useState(false);
   const [needsTokenApproval, setNeedsTokenApproval] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
-  const [paymentStep, setPaymentStep] = useState<'idle' | 'approving' | 'processing' | 'confirming' | 'completed'>('idle');
+  const [paymentStep, setPaymentStep] = useState<
+    "idle" | "approving" | "processing" | "confirming" | "completed"
+  >("idle");
 
   // Get creator profile
   const { data: _creatorProfile } = useGetProfile(paymentLink.creator);
@@ -122,12 +125,15 @@ export function PaymentProcessor({
   });
 
   // Get current token allowance for the current chain
-  const { data: currentAllowance } = useTokenAllowance(currentChainTokenAddress, chainId);
+  const { data: currentAllowance } = useTokenAllowance(
+    currentChainTokenAddress,
+    chainId
+  );
 
   useEffect(() => {
     if (isSuccess && hash) {
       setIsCompleted(true);
-      setPaymentStep('completed');
+      setPaymentStep("completed");
       onSuccess?.(hash);
       toast.success("Payment completed successfully!");
 
@@ -144,8 +150,10 @@ export function PaymentProcessor({
   useEffect(() => {
     if (approvalSuccess) {
       setNeedsTokenApproval(false);
-      setPaymentStep('idle');
-      toast.success("Token approval successful! You can now proceed with payment.");
+      setPaymentStep("idle");
+      toast.success(
+        "Token approval successful! You can now proceed with payment."
+      );
     }
   }, [approvalSuccess]);
 
@@ -160,11 +168,16 @@ export function PaymentProcessor({
       const normalizedAmount = normalizeNumberForParseUnits(paymentLink.amount);
       return parseUnits(normalizedAmount, decimals);
     } catch (error) {
-      console.error('Error parsing amount:', error);
+      console.error("Error parsing amount:", error);
       // Return 0 as fallback to prevent crashes
       return BigInt(0);
     }
-  }, [paymentLink.tokenSymbol, paymentLink.amountType, paymentLink.amount, customAmount]);
+  }, [
+    paymentLink.tokenSymbol,
+    paymentLink.amountType,
+    paymentLink.amount,
+    customAmount,
+  ]);
 
   // Check if approval is needed when amount or allowance changes
   useEffect(() => {
@@ -172,19 +185,25 @@ export function PaymentProcessor({
       const amountToCharge = getAmountToCharge();
       setNeedsTokenApproval(needsApproval(currentAllowance, amountToCharge));
     }
-  }, [currentAllowance, customAmount, paymentLink.amount, address, getAmountToCharge, needsApproval, chainId]);
+  }, [
+    currentAllowance,
+    customAmount,
+    paymentLink.amount,
+    address,
+    getAmountToCharge,
+    needsApproval,
+    chainId,
+  ]);
 
   // Reset approval state when chain changes
   useEffect(() => {
-    setPaymentStep('idle');
+    setPaymentStep("idle");
     // Force re-check of approval when chain changes
     if (currentAllowance !== undefined && address) {
       const amountToCharge = getAmountToCharge();
       setNeedsTokenApproval(needsApproval(currentAllowance, amountToCharge));
     }
   }, [chainId, currentAllowance, address, getAmountToCharge, needsApproval]);
-
-
 
   const getIcon = () => {
     switch (paymentLink.linkType) {
@@ -216,6 +235,133 @@ export function PaymentProcessor({
     }
   };
 
+  // Render content preview for product and content types
+  const renderContentPreview = () => {
+    const metadata = paymentLink.metadata;
+
+    if (paymentLink.linkType === LinkType.PRODUCT && "images" in metadata) {
+      const productMetadata = metadata as any;
+      const images = productMetadata.images || [];
+      const videos = productMetadata.videos || [];
+
+      return (
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm">Product Preview</h4>
+          {images.length > 0 && (
+            <div className="grid gap-2">
+              {images.slice(0, 4).map((imageHash: string, index: number) => (
+                <div
+                  key={index}
+                  className="aspect-square rounded-lg overflow-hidden bg-muted"
+                >
+                  <img
+                    src={`https://gateway.pinata.cloud/ipfs/${imageHash}`}
+                    alt={`Product image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          {videos.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Product Video</p>
+              <video
+                controls
+                className="w-full rounded-lg"
+                style={{ maxHeight: "200px" }}
+              >
+                <source
+                  src={`https://gateway.pinata.cloud/ipfs/${videos[0]}`}
+                />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (
+      paymentLink.linkType === LinkType.CONTENT &&
+      "previewContent" in metadata
+    ) {
+      const contentMetadata = metadata as any;
+      const previewContent = contentMetadata.previewContent || {};
+      const previewImages = previewContent.images || [];
+      const previewVideo = previewContent.video;
+      const previewAudio = previewContent.audio;
+
+      return (
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm">Content Preview</h4>
+          {previewImages.length > 0 && (
+            <div className="grid gap-2">
+              {previewImages
+                .slice(0, 4)
+                .map((imageHash: string, index: number) => (
+                  <div
+                    key={index}
+                    className="h-40 rounded-lg overflow-hidden bg-muted"
+                  >
+                    <img
+                      src={`https://gateway.pinata.cloud/ipfs/${imageHash}`}
+                      alt={`Content preview ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                      }}
+                    />
+                  </div>
+                ))}
+            </div>
+          )}
+          {previewVideo && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Preview Video</p>
+              <video
+                controls
+                className="w-full rounded-lg"
+                style={{ maxHeight: "200px" }}
+              >
+                <source
+                  src={`https://gateway.pinata.cloud/ipfs/${previewVideo}`}
+                />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+          {previewAudio && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Audio Preview</p>
+              <audio controls className="w-full">
+                <source
+                  src={`https://gateway.pinata.cloud/ipfs/${previewAudio}`}
+                />
+                Your browser does not support the audio tag.
+              </audio>
+            </div>
+          )}
+          {previewContent.description && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Description</p>
+              <div className="p-2 bg-border/30 rounded-lg min-h-20">
+                <p className="text-sm">{previewContent.description}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   // Get token decimals for proper amount parsing
   const getTokenDecimals = (tokenSymbol: string): number => {
     const supportedTokens = getTokenConfig(chainId);
@@ -225,33 +371,31 @@ export function PaymentProcessor({
     return token?.decimals || 18; // Default to 18 decimals if not found
   };
 
-
-
   // Helper to detect user cancellation
   const isUserRejection = useCallback((error: any): boolean => {
     if (!error) return false;
 
     const errorMessage = error.message || error.toString();
     const rejectionPatterns = [
-      'user rejected',
-      'user denied',
-      'user cancelled',
-      'user canceled',
-      'rejected by user',
-      'denied by user',
-      'cancelled by user',
-      'canceled by user',
-      'transaction was rejected',
-      'transaction rejected',
-      'user rejected the request',
-      'user rejected transaction',
-      'ACTION_REJECTED',
-      'UNAUTHORIZED',
-      'User rejected',
-      'User denied',
+      "user rejected",
+      "user denied",
+      "user cancelled",
+      "user canceled",
+      "rejected by user",
+      "denied by user",
+      "cancelled by user",
+      "canceled by user",
+      "transaction was rejected",
+      "transaction rejected",
+      "user rejected the request",
+      "user rejected transaction",
+      "ACTION_REJECTED",
+      "UNAUTHORIZED",
+      "User rejected",
+      "User denied",
     ];
 
-    return rejectionPatterns.some(pattern =>
+    return rejectionPatterns.some((pattern) =>
       errorMessage.toLowerCase().includes(pattern.toLowerCase())
     );
   }, []);
@@ -262,7 +406,7 @@ export function PaymentProcessor({
       return;
     }
 
-    setPaymentStep('approving');
+    setPaymentStep("approving");
 
     try {
       const result = await approveMax(currentChainTokenAddress, chainId);
@@ -273,7 +417,7 @@ export function PaymentProcessor({
         } else {
           toast.error(result.error || "Token approval failed");
         }
-        setPaymentStep('idle');
+        setPaymentStep("idle");
       }
     } catch (error) {
       console.error("Approval error:", error);
@@ -282,7 +426,7 @@ export function PaymentProcessor({
       } else {
         toast.error("Token approval failed");
       }
-      setPaymentStep('idle');
+      setPaymentStep("idle");
     }
   };
 
@@ -318,7 +462,7 @@ export function PaymentProcessor({
       return;
     }
 
-    setPaymentStep('processing');
+    setPaymentStep("processing");
 
     try {
       // Create payment request with updated token address for current chain
@@ -363,9 +507,9 @@ export function PaymentProcessor({
           toast.error(result.error || "Payment failed");
         }
         onError?.(result.error || "Payment failed");
-        setPaymentStep('idle');
+        setPaymentStep("idle");
       } else {
-        setPaymentStep('confirming');
+        setPaymentStep("confirming");
       }
     } catch (error) {
       console.error("Payment error:", error);
@@ -373,12 +517,13 @@ export function PaymentProcessor({
       if (isUserRejection(error)) {
         toast.error("Transaction was canceled by user");
       } else {
-        const errorMessage = error instanceof Error ? error.message : "Payment failed";
+        const errorMessage =
+          error instanceof Error ? error.message : "Payment failed";
         toast.error(errorMessage);
         onError?.(errorMessage);
       }
 
-      setPaymentStep('idle');
+      setPaymentStep("idle");
     }
   };
 
@@ -387,7 +532,10 @@ export function PaymentProcessor({
     const supportedTokens = getTokenConfig(chainId);
     console.log("Checking token support - Chain ID:", chainId);
     console.log("Checking token support - Supported tokens:", supportedTokens);
-    console.log("Checking token support - Looking for symbol:", paymentLink.tokenSymbol);
+    console.log(
+      "Checking token support - Looking for symbol:",
+      paymentLink.tokenSymbol
+    );
 
     const isSupported = Object.values(supportedTokens).some(
       (t) => t.symbol === paymentLink.tokenSymbol
@@ -482,8 +630,9 @@ export function PaymentProcessor({
                 <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-yellow-500" />
                 <h3 className="text-xl font-semibold">Token Not Supported</h3>
                 <p>
-                  {paymentLink.tokenSymbol} is not supported on the current network.
-                  Please switch to a supported network to make this payment.
+                  {paymentLink.tokenSymbol} is not supported on the current
+                  network. Please switch to a supported network to make this
+                  payment.
                 </p>
                 <div className="mt-4">
                   <Button
@@ -548,6 +697,15 @@ export function PaymentProcessor({
         </div>
 
         <Separator />
+
+        {/* Content Preview Section */}
+        {(paymentLink.linkType === LinkType.PRODUCT ||
+          paymentLink.linkType === LinkType.CONTENT) && (
+          <>
+            {renderContentPreview()}
+            <Separator />
+          </>
+        )}
 
         {/* Amount Section */}
         <div className="space-y-4">
@@ -618,7 +776,9 @@ export function PaymentProcessor({
         {/* Network Selector */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Network & Approval Status</Label>
+            <Label className="text-sm font-medium">
+              Network & Approval Status
+            </Label>
             <Button
               variant="ghost"
               size="sm"
@@ -648,12 +808,17 @@ export function PaymentProcessor({
           {needsTokenApproval ? (
             <Button
               onClick={handleApproval}
-              disabled={paymentStep === 'approving' || !isConnected || isExpired || isUsed}
+              disabled={
+                paymentStep === "approving" ||
+                !isConnected ||
+                isExpired ||
+                isUsed
+              }
               className="w-full"
               size="lg"
               variant="outline"
             >
-              {paymentStep === 'approving' ? (
+              {paymentStep === "approving" ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Approving {paymentLink.tokenSymbol}...
@@ -668,16 +833,18 @@ export function PaymentProcessor({
           ) : (
             <Button
               onClick={handlePayment}
-              disabled={paymentStep !== 'idle' || !isConnected || isExpired || isUsed}
+              disabled={
+                paymentStep !== "idle" || !isConnected || isExpired || isUsed
+              }
               className="w-full"
               size="lg"
             >
-              {paymentStep === 'processing' ? (
+              {paymentStep === "processing" ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing Payment...
                 </>
-              ) : paymentStep === 'confirming' ? (
+              ) : paymentStep === "confirming" ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Confirming Transaction...
@@ -709,28 +876,29 @@ export function PaymentProcessor({
         )}
 
         {/* Status Messages */}
-        {paymentStep === 'approving' && (
+        {paymentStep === "approving" && (
           <div className="text-sm text-center text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
             <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
-            Approving {paymentLink.tokenSymbol} spending... Please confirm in your wallet.
+            Approving {paymentLink.tokenSymbol} spending... Please confirm in
+            your wallet.
           </div>
         )}
 
-        {paymentStep === 'processing' && (
+        {paymentStep === "processing" && (
           <div className="text-sm text-center text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
             <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
             Processing payment... Please confirm the transaction in your wallet.
           </div>
         )}
 
-        {paymentStep === 'confirming' && (
+        {paymentStep === "confirming" && (
           <div className="text-sm text-center text-yellow-600 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
             <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
             Transaction submitted! Waiting for blockchain confirmation...
           </div>
         )}
 
-        {needsTokenApproval && isConnected && paymentStep === 'idle' && (
+        {needsTokenApproval && isConnected && paymentStep === "idle" && (
           <p className="text-sm text-center text-muted-foreground">
             You need to approve {paymentLink.tokenSymbol} spending before making
             the payment

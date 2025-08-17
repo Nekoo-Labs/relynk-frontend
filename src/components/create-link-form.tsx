@@ -40,10 +40,13 @@ import {
   FileText,
   Upload,
   X,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import { CreateLinkFormData } from "@/types/relynk";
 import { useRelynkProcessor } from "@/hooks/use-relynk-processor";
 import { useCreatePaymentLink } from "@/hooks/use-payment-links";
+import { useSlugValidation } from "@/hooks/use-slug-validation";
 import { getTokenConfig } from "@/lib/contracts";
 import {
   linkFormUISchema,
@@ -60,7 +63,12 @@ interface CreateLinkFormProps {
   showTypeSelection?: boolean;
 }
 
-export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSelection = false }: CreateLinkFormProps) {
+export function CreateLinkForm({
+  onClose,
+  onSuccess,
+  initialLinkType,
+  showTypeSelection = false,
+}: CreateLinkFormProps) {
   const { address, isConnected, isConnecting } = useAccount();
   const { signMessage, isPending: isSigningPending } = useSignMessage();
   const chainId = useChainId();
@@ -82,6 +90,7 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
     defaultValues: {
       title: "",
       description: "",
+      customSlug: "",
       linkType: (initialLinkType || "payment") as LinkFormUIData["linkType"],
       amountType: "fixed" as const,
       usageType: "one_time" as const,
@@ -110,6 +119,10 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
   });
 
   const watchedLinkType = form.watch("linkType");
+  const watchedCustomSlug = form.watch("customSlug");
+
+  // Real-time slug validation
+  const slugValidation = useSlugValidation(watchedCustomSlug || "", 500);
 
   // Reset cancelled state after a delay to allow retry
   useEffect(() => {
@@ -154,14 +167,16 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
   // Map currency to token address using current network's deployed contract addresses
   const getTokenAddress = (currency: string): `0x${string}` => {
     const currentChainTokens = getTokenConfig(chainId);
-    const token = currentChainTokens[currency as keyof typeof currentChainTokens];
+    const token =
+      currentChainTokens[currency as keyof typeof currentChainTokens];
     return token?.address || currentChainTokens.USDC.address;
   };
 
   // Get token decimals for proper amount formatting
   const getTokenDecimals = (currency: string): number => {
     const currentChainTokens = getTokenConfig(chainId);
-    const token = currentChainTokens[currency as keyof typeof currentChainTokens];
+    const token =
+      currentChainTokens[currency as keyof typeof currentChainTokens];
     return token?.decimals || currentChainTokens.USDC.decimals;
   };
 
@@ -243,7 +258,7 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
       console.log("Submission blocked:", {
         isSubmitting: isSubmittingRef.current,
         isSigningPending,
-        isCancelled
+        isCancelled,
       });
       return;
     }
@@ -284,7 +299,10 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
       // Format amount with proper decimals for the selected token
       const tokenDecimals = getTokenDecimals(data.currency);
       const formattedAmount = data.amount
-        ? parseUnits(normalizeNumberForParseUnits(data.amount), tokenDecimals).toString()
+        ? parseUnits(
+            normalizeNumberForParseUnits(data.amount),
+            tokenDecimals
+          ).toString()
         : "0";
 
       // console.log("Token decimals:", tokenDecimals);
@@ -294,6 +312,7 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
       const linkFormData: CreateLinkFormData = {
         title: contractData.title,
         description: contractData.description as string,
+        customSlug: contractData.customSlug, // Include custom slug
         linkType: contractData.linkType,
         amountType: contractData.amountType,
         usageType: contractData.usageType,
@@ -318,21 +337,14 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
       );
       // console.log("Metadata created:", comprehensiveMetadata);
 
-      // Store metadata to IPFS and get the hash
-      const { UnifiedIPFSService } = await import("@/lib/unified-ipfs-service");
-      const ipfsHash = await UnifiedIPFSService.storeMetadata(
-        comprehensiveMetadata
-      );
-      // console.log("Metadata stored to IPFS with hash:", ipfsHash);
-
-      // NOW create link data with the IPFS hash as metadata
-      // This ensures the signature is created with the final metadata value
+      // Create link data with a placeholder metadata value
+      // The actual metadata will be stored with the complete payment link
       // console.log("Creating link data with address:", address);
       const linkData = await createLinkData(
         {
           ...linkFormData,
-          // Override the metadata with the IPFS hash
-          metadata: ipfsHash,
+          // Use a placeholder - this will be replaced with the IPFS hash of the complete file
+          metadata: "pending",
         },
         address as `0x${string}`
       );
@@ -440,7 +452,9 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
           errorName.includes("userrejectedrequest")
         ) {
           // User cancelled - don't show error, just reset state silently
-          console.log("User cancelled signature request - resetting form state");
+          console.log(
+            "User cancelled signature request - resetting form state"
+          );
           setIsCancelled(true);
           // Don't reset isSubmittingRef here to prevent immediate retry
           return; // Exit early without showing error
@@ -510,17 +524,21 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
                         form.setValue("linkType", type.id);
                       }
                     }}
-                    className={
-                      `group relative text-left rounded-2xl border-2 p-4 transition-all focus:outline-none focus:ring-2 focus:ring-main focus:ring-offset-2 ${
-                        selected
-                          ? "border-main/80 bg-main/5 shadow-shadow"
-                          : "border-border hover:border-main/50"
-                      }`
-                    }
+                    className={`group relative text-left rounded-2xl border-2 p-4 transition-all focus:outline-none focus:ring-2 focus:ring-main focus:ring-offset-2 ${
+                      selected
+                        ? "border-main/80 bg-main/5 shadow-shadow"
+                        : "border-border hover:border-main/50"
+                    }`}
                   >
                     <div className="absolute inset-0 rounded-2xl pointer-events-none" />
                     <div className="flex items-center gap-2 font-heading text-foreground mb-2">
-                      <span className={`flex h-7 w-7 items-center justify-center rounded-full border ${selected ? "border-main bg-main/10 text-main" : "border-border text-foreground/70"}`}>
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full border ${
+                          selected
+                            ? "border-main bg-main/10 text-main"
+                            : "border-border text-foreground/70"
+                        }`}
+                      >
                         <IconComponent className="h-4 w-4" />
                       </span>
                       <span>{type.label}</span>
@@ -587,6 +605,81 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
                     <FormDescription>
                       Optional description to help users understand what
                       they&apos;re paying for
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField<LinkFormUIData>
+                control={form.control}
+                name="customSlug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Custom Link Slug (optional)</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-foreground/60 whitespace-nowrap">
+                          relynk.app/pay/
+                        </span>
+                        <div className="relative flex-1">
+                          <Input
+                            placeholder="my-awesome-link"
+                            className="border-2 border-border shadow-shadow pr-8"
+                            {...field}
+                            value={
+                              typeof field.value === "string" ? field.value : ""
+                            }
+                            onChange={(e) => {
+                              // Minimal processing to allow natural typing
+                              let value = e.target.value.toLowerCase();
+
+                              // Only replace clearly invalid characters (spaces, special chars)
+                              // Keep hyphens and underscores as typed
+                              value = value.replace(/[^a-z0-9\-_]/g, "-");
+
+                              field.onChange(value);
+                            }}
+                          />
+                          {/* Validation status icon */}
+                          {field.value && (
+                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                              {slugValidation.isChecking ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-foreground/60" />
+                              ) : slugValidation.isValid &&
+                                slugValidation.isAvailable ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <AlertCircle className="h-4 w-4 text-red-600" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      {field.value ? (
+                        slugValidation.isChecking ? (
+                          <span className="text-foreground/60">
+                            Checking availability...
+                          </span>
+                        ) : slugValidation.error ? (
+                          <span className="text-red-600">
+                            {slugValidation.error}
+                          </span>
+                        ) : slugValidation.isValid &&
+                          slugValidation.isAvailable ? (
+                          <span className="text-green-600">
+                            ✓ Slug is available
+                          </span>
+                        ) : (
+                          <span className="text-red-600">
+                            Slug is not available or invalid
+                          </span>
+                        )
+                      ) : (
+                        "Create a custom URL for your link. Leave empty to use auto-generated ID. Only lowercase letters, numbers, and hyphens allowed."
+                      )}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -725,63 +818,73 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Amount Type Selection */}
-              <FormField
-                control={form.control}
-                name="amountType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="border-2 border-border shadow-shadow">
-                          <SelectValue placeholder="Select amount type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="fixed">Fixed Amount</SelectItem>
-                        <SelectItem value="dynamic">Dynamic Amount</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      {field.value === "fixed" &&
-                        "Users pay exactly this amount"}
-                      {field.value === "dynamic" &&
-                        "Users can enter any amount they want"}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Amount Type Selection */}
+                <FormField
+                  control={form.control}
+                  name="amountType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="border-2 border-border shadow-shadow">
+                            <SelectValue placeholder="Select amount type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="fixed">Fixed Amount</SelectItem>
+                          <SelectItem value="dynamic">
+                            Dynamic Amount
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {field.value === "fixed" &&
+                          "Users pay exactly this amount"}
+                        {field.value === "dynamic" &&
+                          "Users can enter any amount they want"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Usage Type Selection */}
-              <FormField
-                control={form.control}
-                name="usageType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Usage Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="border-2 border-border shadow-shadow">
-                          <SelectValue placeholder="Select usage type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="one_time">One Time</SelectItem>
-                        <SelectItem value="reusable">Reusable</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      {field.value === "one_time" &&
-                        "Link can only be used once"}
-                      {field.value === "reusable" &&
-                        "Link can be used multiple times"}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Usage Type Selection */}
+                <FormField
+                  control={form.control}
+                  name="usageType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Usage Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="border-2 border-border shadow-shadow">
+                            <SelectValue placeholder="Select usage type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="one_time">One Time</SelectItem>
+                          <SelectItem value="reusable">Reusable</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {field.value === "one_time" &&
+                          "Link can only be used once"}
+                        {field.value === "reusable" &&
+                          "Link can be used multiple times"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
@@ -826,11 +929,13 @@ export function CreateLinkForm({ onClose, onSuccess, initialLinkType, showTypeSe
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(getTokenConfig(chainId)).map(([symbol, token]) => (
-                            <SelectItem key={symbol} value={symbol}>
-                              {symbol} - {token.name}
-                            </SelectItem>
-                          ))}
+                          {Object.entries(getTokenConfig(chainId)).map(
+                            ([symbol, token]) => (
+                              <SelectItem key={symbol} value={symbol}>
+                                {symbol} - {token.name}
+                              </SelectItem>
+                            )
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
