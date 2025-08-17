@@ -120,7 +120,7 @@ export function CreateLinkForm({
 
   const watchedLinkType = form.watch("linkType");
   const watchedCustomSlug = form.watch("customSlug");
-  
+
   // Real-time slug validation
   const slugValidation = useSlugValidation(watchedCustomSlug || "", 500);
 
@@ -337,21 +337,14 @@ export function CreateLinkForm({
       );
       // console.log("Metadata created:", comprehensiveMetadata);
 
-      // Store metadata to IPFS and get the hash
-      const { UnifiedIPFSService } = await import("@/lib/unified-ipfs-service");
-      const ipfsHash = await UnifiedIPFSService.storeMetadata(
-        comprehensiveMetadata
-      );
-      // console.log("Metadata stored to IPFS with hash:", ipfsHash);
-
-      // NOW create link data with the IPFS hash as metadata
-      // This ensures the signature is created with the final metadata value
+      // Create link data with a placeholder metadata value
+      // The actual metadata will be stored with the complete payment link
       // console.log("Creating link data with address:", address);
       const linkData = await createLinkData(
         {
           ...linkFormData,
-          // Override the metadata with the IPFS hash
-          metadata: ipfsHash,
+          // Use a placeholder - this will be replaced with the IPFS hash of the complete file
+          metadata: "pending",
         },
         address as `0x${string}`
       );
@@ -640,11 +633,11 @@ export function CreateLinkForm({
                             onChange={(e) => {
                               // Minimal processing to allow natural typing
                               let value = e.target.value.toLowerCase();
-                              
+
                               // Only replace clearly invalid characters (spaces, special chars)
                               // Keep hyphens and underscores as typed
                               value = value.replace(/[^a-z0-9\-_]/g, "-");
-                              
+
                               field.onChange(value);
                             }}
                           />
@@ -653,7 +646,8 @@ export function CreateLinkForm({
                             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                               {slugValidation.isChecking ? (
                                 <Loader2 className="h-4 w-4 animate-spin text-foreground/60" />
-                              ) : slugValidation.isValid && slugValidation.isAvailable ? (
+                              ) : slugValidation.isValid &&
+                                slugValidation.isAvailable ? (
                                 <Check className="h-4 w-4 text-green-600" />
                               ) : (
                                 <AlertCircle className="h-4 w-4 text-red-600" />
@@ -666,13 +660,22 @@ export function CreateLinkForm({
                     <FormDescription>
                       {field.value ? (
                         slugValidation.isChecking ? (
-                          <span className="text-foreground/60">Checking availability...</span>
+                          <span className="text-foreground/60">
+                            Checking availability...
+                          </span>
                         ) : slugValidation.error ? (
-                          <span className="text-red-600">{slugValidation.error}</span>
-                        ) : slugValidation.isValid && slugValidation.isAvailable ? (
-                          <span className="text-green-600">✓ Slug is available</span>
+                          <span className="text-red-600">
+                            {slugValidation.error}
+                          </span>
+                        ) : slugValidation.isValid &&
+                          slugValidation.isAvailable ? (
+                          <span className="text-green-600">
+                            ✓ Slug is available
+                          </span>
                         ) : (
-                          <span className="text-red-600">Slug is not available or invalid</span>
+                          <span className="text-red-600">
+                            Slug is not available or invalid
+                          </span>
                         )
                       ) : (
                         "Create a custom URL for your link. Leave empty to use auto-generated ID. Only lowercase letters, numbers, and hyphens allowed."
@@ -815,63 +818,73 @@ export function CreateLinkForm({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Amount Type Selection */}
-              <FormField
-                control={form.control}
-                name="amountType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="border-2 border-border shadow-shadow">
-                          <SelectValue placeholder="Select amount type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="fixed">Fixed Amount</SelectItem>
-                        <SelectItem value="dynamic">Dynamic Amount</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      {field.value === "fixed" &&
-                        "Users pay exactly this amount"}
-                      {field.value === "dynamic" &&
-                        "Users can enter any amount they want"}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Amount Type Selection */}
+                <FormField
+                  control={form.control}
+                  name="amountType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="border-2 border-border shadow-shadow">
+                            <SelectValue placeholder="Select amount type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="fixed">Fixed Amount</SelectItem>
+                          <SelectItem value="dynamic">
+                            Dynamic Amount
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {field.value === "fixed" &&
+                          "Users pay exactly this amount"}
+                        {field.value === "dynamic" &&
+                          "Users can enter any amount they want"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Usage Type Selection */}
-              <FormField
-                control={form.control}
-                name="usageType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Usage Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="border-2 border-border shadow-shadow">
-                          <SelectValue placeholder="Select usage type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="one_time">One Time</SelectItem>
-                        <SelectItem value="reusable">Reusable</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      {field.value === "one_time" &&
-                        "Link can only be used once"}
-                      {field.value === "reusable" &&
-                        "Link can be used multiple times"}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Usage Type Selection */}
+                <FormField
+                  control={form.control}
+                  name="usageType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Usage Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="border-2 border-border shadow-shadow">
+                            <SelectValue placeholder="Select usage type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="one_time">One Time</SelectItem>
+                          <SelectItem value="reusable">Reusable</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {field.value === "one_time" &&
+                          "Link can only be used once"}
+                        {field.value === "reusable" &&
+                          "Link can be used multiple times"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
