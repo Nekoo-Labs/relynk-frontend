@@ -68,7 +68,7 @@ export function ProfileCreationForm({
 
   // Fetch user's payment links
   const { data: paymentLinks = [], isLoading: isLoadingPaymentLinks } =
-    useUserPaymentLinks();
+    useUserPaymentLinks("", "active");
 
   const [formData, setFormData] = useState<ProfileFormData>({
     username: existingUsername || "",
