@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAccount, useBalance, useChainId } from "wagmi";
+import { Address } from "viem";
 import { parseUnits, formatUnits } from "viem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,7 +78,7 @@ export function PaymentProcessor({
     hash,
   } = useRelynkProcessor();
 
-  const { useGetProfile } = useProfileRegistry();
+  const { useGetProfileByOwner } = useProfileRegistry();
 
   const {
     useTokenAllowance,
@@ -97,8 +98,22 @@ export function PaymentProcessor({
     "idle" | "approving" | "processing" | "confirming" | "completed"
   >("idle");
 
-  // Get creator profile
-  const { data: _creatorProfile } = useGetProfile(paymentLink.creator);
+  // Get creator profile and username
+  const { data: creatorProfileData } = useGetProfileByOwner(
+    paymentLink.creator as Address
+  ) as {
+    data:
+      | [
+          {
+            owner: Address;
+            ipfsHash: string;
+            createdAt: bigint;
+            updatedAt: bigint;
+          },
+          string
+        ]
+      | undefined;
+  };
 
   // Check if link is already used (for single-use links)
   const { data: isLinkUsed } = useIsLinkUsed(paymentLink.id);
@@ -679,20 +694,35 @@ export function PaymentProcessor({
 
       <CardContent className="space-y-6">
         {/* Creator Info */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-start space-x-3">
           <Avatar>
             <AvatarFallback>
               {paymentLink.creator.slice(2, 4).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium">
-              {`${paymentLink.creator.slice(
-                0,
-                6
-              )}...${paymentLink.creator.slice(-4)}`}
-            </p>
-            <p className="text-sm text-muted-foreground">Creator</p>
+            {creatorProfileData && creatorProfileData[1] ? (
+              <>
+                <p className="text-xs text-muted-foreground">Creator: </p>
+                <p className="font-medium">@{creatorProfileData[1]}</p>
+                <p className="text-xs text-muted-foreground">
+                  {`${paymentLink.creator.slice(
+                    0,
+                    6
+                  )}...${paymentLink.creator.slice(-4)}`}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">
+                  {`${paymentLink.creator.slice(
+                    0,
+                    6
+                  )}...${paymentLink.creator.slice(-4)}`}
+                </p>
+                <p className="text-sm text-muted-foreground">Creator</p>
+              </>
+            )}
           </div>
         </div>
 
