@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Lock, Unlock, Download, ExternalLink } from "lucide-react";
 import { EmailService } from "@/lib/email-service";
 import { PaymentLink, LinkType, ContentMetadata, ProductMetadata } from "@/types/relynk";
+import ConnectWallet from "@/components/ui/connect-wallet";
 
 // TODO: FUTURE_IMPROVEMENT - Unify access data interfaces across frontend and backend
 // TODO: FUTURE_IMPROVEMENT - Add TypeScript strict mode for better type safety
@@ -70,6 +71,15 @@ export default function ContentAccessPage() {
 
   useEffect(() => {
     if (linkId && token) {
+      // Check if wallet is connected before verifying access
+      if (!isConnected || !address) {
+        setAccessResult({
+          isValid: false,
+          error: "Please connect your wallet to verify access to this content.",
+        });
+        setIsLoading(false);
+        return;
+      }
       verifyAccess();
     } else {
       setAccessResult({
@@ -78,11 +88,20 @@ export default function ContentAccessPage() {
       });
       setIsLoading(false);
     }
-  }, [linkId, token, address]);
+  }, [linkId, token, address, isConnected]);
 
   const verifyAccess = async () => {
     try {
       setIsLoading(true);
+
+      // Ensure wallet is connected before making API call
+      if (!isConnected || !address) {
+        setAccessResult({
+          isValid: false,
+          error: "Wallet connection required to verify access.",
+        });
+        return;
+      }
 
       // Call API to verify access
       const response = await fetch(`/api/v1/content/verify-access`, {
@@ -98,6 +117,21 @@ export default function ContentAccessPage() {
       });
 
       const result = await response.json();
+      
+      // Additional frontend validation: ensure connected address matches buyer address
+      if (result.isValid && result.accessRecord?.buyer) {
+        const buyerAddress = result.accessRecord.buyer.toLowerCase();
+        const connectedAddress = address.toLowerCase();
+        
+        if (buyerAddress !== connectedAddress) {
+          setAccessResult({
+            isValid: false,
+            error: `Access denied. This content was purchased by ${result.accessRecord.buyer}, but you are connected as ${address}. Please connect with the correct wallet.`,
+          });
+          return;
+        }
+      }
+      
       setAccessResult(result);
     } catch (error) {
       console.error("Access verification failed:", error);
@@ -228,6 +262,12 @@ export default function ContentAccessPage() {
                   Please connect your wallet to verify your purchase.
                 </AlertDescription>
               </Alert>
+            )}
+
+            {!isConnected && (
+              <div className="mt-4">
+                <ConnectWallet className="w-full" />
+              </div>
             )}
           </CardContent>
         </Card>
