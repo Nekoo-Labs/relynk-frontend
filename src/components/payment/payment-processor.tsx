@@ -35,7 +35,6 @@ import { normalizeNumberForParseUnits } from "@/lib/utils";
 import { toast } from "sonner";
 import { invalidatePaymentRelatedCaches } from "@/services/api";
 import { EmailService } from "@/lib/email-service";
-import { JWTService } from "@/lib/jwt-service";
 import { storeAccessRecord } from "@/app/api/v1/content/verify-access/route";
 import {
   Loader2,
@@ -250,22 +249,31 @@ export function PaymentProcessor({
 
       // For content and product purchases, create access records and send access emails
       if (paymentLink.linkType === LinkType.CONTENT || paymentLink.linkType === LinkType.PRODUCT) {
-        // Generate JWT access token
-        const accessToken = await JWTService.generateAccessToken(
-          paymentLink.id,
-          address,
-          transactionHash,
-          {
+        // Generate JWT access token via API route (server-side)
+        const tokenResponse = await fetch('/api/v1/auth/generate-access-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            linkId: paymentLink.id,
+            buyerAddress: address,
+            transactionHash,
             buyerEmail: buyerEmail || undefined,
-            linkType: paymentLink.linkType === LinkType.CONTENT ? 'content' : 'product',
+            linkType: paymentLink.linkType,
             contentTitle: paymentLink.title,
             maxDownloads: paymentLink.linkType === LinkType.PRODUCT ? 5 : undefined,
             expiresIn: '30d'
-          }
-        );
+          })
+        });
+
+        if (!tokenResponse.ok) {
+          throw new Error('Failed to generate access token');
+        }
+
+        const { accessToken } = await tokenResponse.json();
         
-        // TODO: FUTURE_IMPROVEMENT - Add error handling for JWT generation failures
-        // FLAG: JWT_PAYMENT_INTEGRATION - Updated payment processor to use JWT tokens
+        // FLAG: JWT_PAYMENT_INTEGRATION - Updated payment processor to use server-side JWT generation
         
         // Store access record
         storeAccessRecord({

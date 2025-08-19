@@ -1,5 +1,5 @@
-import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
-import crypto from 'crypto';
+import { SignJWT, jwtVerify, type JWTPayload } from "jose";
+import crypto from "crypto";
 
 // TODO: FUTURE_IMPROVEMENT - Move JWT secret to environment variables for production
 // TODO: FUTURE_IMPROVEMENT - Implement key rotation strategy for enhanced security
@@ -8,8 +8,11 @@ import crypto from 'crypto';
 // TODO: FUTURE_IMPROVEMENT - Add audit logging for JWT operations
 // FLAG: JWT_IMPLEMENTATION_V1 - Initial JWT implementation for MVP
 
-// JWT secret - In production, this should be stored in environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'relynk-jwt-secret-key-change-in-production';
+// JWT secret - Must be set in environment variables
+const JWT_SECRET = process.env.JWT_SECRET;
+// if (!JWT_SECRET) {
+//   throw new Error("JWT_SECRET environment variable is required but not set");
+// }
 const secret = new TextEncoder().encode(JWT_SECRET);
 
 // JWT payload interface for access tokens
@@ -48,7 +51,7 @@ export class JWTService {
       linkType,
       contentTitle,
       maxDownloads = 5,
-      expiresIn = '30d'
+      expiresIn = "30d",
     } = options;
 
     const payload: AccessTokenPayload = {
@@ -61,9 +64,9 @@ export class JWTService {
       maxDownloads,
       downloadCount: 0,
       // Standard JWT claims
-      iss: 'relynk', // Issuer
+      iss: "relynk", // Issuer
       sub: `access:${linkId}`, // Subject
-      aud: 'relynk-users', // Audience
+      aud: "relynk-users", // Audience
       iat: Math.floor(Date.now() / 1000), // Issued at
     };
 
@@ -75,18 +78,20 @@ export class JWTService {
 
     try {
       const jwt = await new SignJWT(payload)
-        .setProtectedHeader({ alg: 'HS256' })
+        .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt()
-        .setIssuer('relynk')
-        .setAudience('relynk-users')
+        .setIssuer("relynk")
+        .setAudience("relynk-users")
         .setSubject(`access:${linkId}`)
         .sign(secret);
 
-      console.log(`[JWT] Generated access token for linkId: ${linkId}, buyer: ${buyer.substring(0, 8)}...`);
+      console.log(
+        `[JWT] Generated access token for linkId: ${linkId}, buyer: ${buyer.substring(0, 8)}...`
+      );
       return jwt;
     } catch (error) {
-      console.error('[JWT] Error generating access token:', error);
-      throw new Error('Failed to generate access token');
+      console.error("[JWT] Error generating access token:", error);
+      throw new Error("Failed to generate access token");
     }
   }
 
@@ -95,17 +100,21 @@ export class JWTService {
    * TODO: FUTURE_IMPROVEMENT - Add token blacklisting mechanism
    * TODO: FUTURE_IMPROVEMENT - Implement token refresh logic
    */
-  static async verifyAccessToken(token: string): Promise<AccessTokenPayload | null> {
+  static async verifyAccessToken(
+    token: string
+  ): Promise<AccessTokenPayload | null> {
     try {
       const { payload } = await jwtVerify(token, secret, {
-        issuer: 'relynk',
-        audience: 'relynk-users',
+        issuer: "relynk",
+        audience: "relynk-users",
       });
 
-      console.log(`[JWT] Successfully verified token for linkId: ${payload.linkId}`);
+      console.log(
+        `[JWT] Successfully verified token for linkId: ${payload.linkId}`
+      );
       return payload as AccessTokenPayload;
     } catch (error) {
-      console.error('[JWT] Token verification failed:', error);
+      console.error("[JWT] Token verification failed:", error);
       return null;
     }
   }
@@ -130,22 +139,32 @@ export class JWTService {
   ): { isValid: boolean; error?: string } {
     // Check if token is for the correct link
     if (payload.linkId !== linkId) {
-      return { isValid: false, error: 'Token is not valid for this content' };
+      return { isValid: false, error: "Token is not valid for this content" };
     }
 
     // Check if token is expired
     if (this.isTokenExpired(payload)) {
-      return { isValid: false, error: 'Access token has expired' };
+      return { isValid: false, error: "Access token has expired" };
     }
 
     // Check buyer address if provided
-    if (buyerAddress && payload.buyer.toLowerCase() !== buyerAddress.toLowerCase()) {
-      return { isValid: false, error: 'Token does not match the connected wallet' };
+    if (
+      buyerAddress &&
+      payload.buyer.toLowerCase() !== buyerAddress.toLowerCase()
+    ) {
+      return {
+        isValid: false,
+        error: "Token does not match the connected wallet",
+      };
     }
 
     // Check download limits
-    if (payload.maxDownloads && payload.downloadCount && payload.downloadCount >= payload.maxDownloads) {
-      return { isValid: false, error: 'Download limit exceeded' };
+    if (
+      payload.maxDownloads &&
+      payload.downloadCount &&
+      payload.downloadCount >= payload.maxDownloads
+    ) {
+      return { isValid: false, error: "Download limit exceeded" };
     }
 
     return { isValid: true };
@@ -164,7 +183,7 @@ export class JWTService {
       if (!payload) return null;
 
       const newDownloadCount = (payload.downloadCount || 0) + incrementBy;
-      
+
       // Generate new token with updated download count
       return await this.generateAccessToken(
         payload.linkId,
@@ -175,11 +194,13 @@ export class JWTService {
           linkType: payload.linkType,
           contentTitle: payload.contentTitle,
           maxDownloads: payload.maxDownloads,
-          expiresIn: payload.exp ? `${Math.floor((payload.exp * 1000 - Date.now()) / (1000 * 60 * 60 * 24))}d` : '30d'
+          expiresIn: payload.exp
+            ? `${Math.floor((payload.exp * 1000 - Date.now()) / (1000 * 60 * 60 * 24))}d`
+            : "30d",
         }
       );
     } catch (error) {
-      console.error('[JWT] Error updating download count:', error);
+      console.error("[JWT] Error updating download count:", error);
       return null;
     }
   }
@@ -191,21 +212,21 @@ export class JWTService {
   private static parseExpirationTime(expiresIn: string): number | null {
     const timeRegex = /^(\d+)([dhm])$/;
     const match = expiresIn.match(timeRegex);
-    
+
     if (!match) return null;
-    
+
     const value = parseInt(match[1]);
     const unit = match[2];
-    
+
     const now = Date.now();
-    
+
     switch (unit) {
-      case 'd': // days
-        return now + (value * 24 * 60 * 60 * 1000);
-      case 'h': // hours
-        return now + (value * 60 * 60 * 1000);
-      case 'm': // minutes
-        return now + (value * 60 * 1000);
+      case "d": // days
+        return now + value * 24 * 60 * 60 * 1000;
+      case "h": // hours
+        return now + value * 60 * 60 * 1000;
+      case "m": // minutes
+        return now + value * 60 * 1000;
       default:
         return null;
     }
@@ -216,17 +237,24 @@ export class JWTService {
    * TODO: FUTURE_IMPROVEMENT - Phase out deterministic tokens in favor of proper JWT flow
    * FLAG: BACKWARD_COMPATIBILITY - Support for existing mock token system
    */
-  static generateDeterministicToken(linkId: string, buyer: string, transactionHash: string): string {
+  static generateDeterministicToken(
+    linkId: string,
+    buyer: string,
+    transactionHash: string
+  ): string {
     const data = `${linkId}-${buyer}-${transactionHash}`;
-    return crypto.createHash('sha256').update(data).digest('hex');
+    return crypto.createHash("sha256").update(data).digest("hex");
   }
 }
 
 // Export utility functions for backward compatibility
-export const generateAccessToken = JWTService.generateAccessToken.bind(JWTService);
+export const generateAccessToken =
+  JWTService.generateAccessToken.bind(JWTService);
 export const verifyAccessToken = JWTService.verifyAccessToken.bind(JWTService);
-export const validateTokenAccess = JWTService.validateTokenAccess.bind(JWTService);
-export const updateDownloadCount = JWTService.updateDownloadCount.bind(JWTService);
+export const validateTokenAccess =
+  JWTService.validateTokenAccess.bind(JWTService);
+export const updateDownloadCount =
+  JWTService.updateDownloadCount.bind(JWTService);
 
 // TODO: FUTURE_IMPROVEMENT - Add JWT middleware for automatic token validation
 // TODO: FUTURE_IMPROVEMENT - Implement JWT token caching for performance

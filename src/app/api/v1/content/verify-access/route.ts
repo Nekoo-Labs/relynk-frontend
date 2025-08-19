@@ -23,7 +23,7 @@ import { JWTService } from '@/lib/jwt-service';
 const verifyAccessSchema = z.object({
   linkId: z.string().min(1, 'Link ID is required'),
   accessToken: z.string().min(1, 'Access token is required'),
-  buyerAddress: z.string().optional(),
+  buyerAddress: z.string().min(1, 'Buyer address is required'),
 });
 
 // Helper function to generate access token
