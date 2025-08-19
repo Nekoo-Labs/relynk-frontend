@@ -469,6 +469,10 @@ export function useRevenueTrends(_timeRange: "7d" | "30d" | "90d" = "30d") {
   const { stats } = useAnalytics();
 
   return useMemo(() => {
+    if (!stats?.monthlyEarnings) {
+      return [];
+    }
+    
     const trends = Object.entries(stats.monthlyEarnings)
       .map(([month, earnings]) => {
         const totalUSD = Object.entries(earnings).reduce(

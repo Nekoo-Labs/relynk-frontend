@@ -30,10 +30,13 @@ import {
   UsageType,
   PaymentRequest,
 } from "@/types/relynk";
-import { getTokenConfig } from "@/lib/contracts";
+import { getTokenConfig, getTransactionUrl } from "@/lib/contracts";
 import { normalizeNumberForParseUnits } from "@/lib/utils";
 import { toast } from "sonner";
 import { invalidatePaymentRelatedCaches } from "@/services/api";
+import { EmailService } from "@/lib/email-service";
+import { JWTService } from "@/lib/jwt-service";
+import { storeAccessRecord } from "@/app/api/v1/content/verify-access/route";
 import {
   Loader2,
   CreditCard,
@@ -91,6 +94,7 @@ export function PaymentProcessor({
 
   const [customAmount, setCustomAmount] = useState("");
   const [message, setMessage] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
   const [needsTokenApproval, setNeedsTokenApproval] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
@@ -151,6 +155,9 @@ export function PaymentProcessor({
       setPaymentStep("completed");
       onSuccess?.(hash);
       toast.success("Payment completed successfully!");
+
+      // Handle post-payment actions (email sending and access creation)
+      handlePostPaymentActions(hash);
 
       // Invalidate payment-related caches for real-time updates
       if (address) {
@@ -219,6 +226,82 @@ export function PaymentProcessor({
       setNeedsTokenApproval(needsApproval(currentAllowance, amountToCharge));
     }
   }, [chainId, currentAllowance, address, getAmountToCharge, needsApproval]);
+
+  // Handle post-payment actions (email sending and access creation)
+  const handlePostPaymentActions = async (transactionHash: string) => {
+    if (!address || !buyerEmail) return;
+
+    try {
+      // Send transaction receipt email
+      await EmailService.sendTransactionReceipt({
+        buyerEmail,
+        transactionHash,
+        linkId: paymentLink.id,
+        linkType: paymentLink.linkType,
+        amount: paymentLink.amountType === AmountType.DYNAMIC && customAmount 
+          ? customAmount 
+          : paymentLink.amount,
+        token: paymentLink.tokenSymbol,
+        creatorName: creatorProfileData?.[1] || paymentLink.creator,
+        productTitle: paymentLink.linkType === LinkType.PRODUCT ? paymentLink.title : undefined,
+        contentTitle: paymentLink.linkType === LinkType.CONTENT ? paymentLink.title : undefined,
+        blockExplorerUrl: getTransactionUrl(chainId, transactionHash),
+      });
+
+      // For content and product purchases, create access records and send access emails
+      if (paymentLink.linkType === LinkType.CONTENT || paymentLink.linkType === LinkType.PRODUCT) {
+        // Generate JWT access token
+        const accessToken = await JWTService.generateAccessToken(
+          paymentLink.id,
+          address,
+          transactionHash,
+          {
+            buyerEmail: buyerEmail || undefined,
+            linkType: paymentLink.linkType === LinkType.CONTENT ? 'content' : 'product',
+            contentTitle: paymentLink.title,
+            maxDownloads: paymentLink.linkType === LinkType.PRODUCT ? 5 : undefined,
+            expiresIn: '30d'
+          }
+        );
+        
+        // TODO: FUTURE_IMPROVEMENT - Add error handling for JWT generation failures
+        // FLAG: JWT_PAYMENT_INTEGRATION - Updated payment processor to use JWT tokens
+        
+        // Store access record
+        storeAccessRecord({
+          linkId: paymentLink.id,
+          buyer: address,
+          purchaseTransaction: transactionHash,
+          accessToken,
+          createdAt: Date.now(),
+          expiresAt: paymentLink.linkType === LinkType.CONTENT ? Date.now() + (30 * 24 * 60 * 60 * 1000) : undefined, // 30 days for content
+          downloadCount: 0,
+          maxDownloads: paymentLink.linkType === LinkType.PRODUCT ? 5 : undefined, // 5 downloads for products
+          buyerEmail,
+        });
+
+        // Generate access URL
+        const accessUrl = `${window.location.origin}/access/${paymentLink.id}?token=${accessToken}`;
+        
+        // Send content access email
+        await EmailService.sendContentAccessEmail({
+          buyerEmail,
+          contentTitle: paymentLink.title,
+          creatorName: creatorProfileData?.[1] || paymentLink.creator,
+          accessUrl,
+          accessToken,
+          transactionHash,
+          purchaseDate: new Date().toISOString(),
+        });
+
+        toast.success("Access details sent to your email!");
+      }
+    } catch (error) {
+      console.error('Post-payment actions failed:', error);
+      // Don't show error to user as payment was successful
+      // Just log for debugging
+    }
+  };
 
   const getIcon = () => {
     switch (paymentLink.linkType) {
@@ -464,6 +547,18 @@ export function PaymentProcessor({
       }
     }
 
+    // Validate email for product and content purchases
+    if ((paymentLink.linkType === LinkType.PRODUCT || paymentLink.linkType === LinkType.CONTENT) && !buyerEmail) {
+      toast.error("Please enter your email address to receive the content");
+      return;
+    }
+
+    // Basic email validation
+    if (buyerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     // Check if user has sufficient balance
     const amountToCharge = getAmountToCharge();
     if (balance && balance.value < amountToCharge) {
@@ -490,6 +585,7 @@ export function PaymentProcessor({
         linkData: updatedLinkData,
         signature: paymentLink.signature, // Use the stored signature from link creation
         message: message,
+        buyerEmail: buyerEmail || undefined,
         customAmount:
           paymentLink.amountType !== AmountType.FIXED
             ? amountToCharge
@@ -786,6 +882,28 @@ export function PaymentProcessor({
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={3}
+              />
+            </div>
+          )}
+
+          {/* Email for product and content purchases */}
+          {(paymentLink.linkType === LinkType.PRODUCT ||
+            paymentLink.linkType === LinkType.CONTENT) && (
+            <div className="space-y-2">
+              <Label htmlFor="buyerEmail">
+                Email Address *
+                <span className="text-xs text-muted-foreground ml-1">
+                  (for content delivery)
+                </span>
+              </Label>
+              <Input
+                id="buyerEmail"
+                type="email"
+                placeholder="your.email@example.com"
+                value={buyerEmail}
+                onChange={(e) => setBuyerEmail(e.target.value)}
+                className="border-2 border-border shadow-shadow"
+                required
               />
             </div>
           )}
