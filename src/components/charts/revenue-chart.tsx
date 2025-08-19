@@ -18,7 +18,7 @@ interface RevenueChartProps {
 
 export function RevenueChart({ data, className }: RevenueChartProps) {
   const { maxRevenue, trend, totalRevenue } = useMemo(() => {
-    if (!data.length) return { maxRevenue: 0, trend: 0, totalRevenue: 0 };
+    if (!data || !data.length) return { maxRevenue: 0, trend: 0, totalRevenue: 0 };
     
     const max = Math.max(...data.map(d => d.revenue));
     const total = data.reduce((sum, d) => sum + d.revenue, 0);
@@ -58,7 +58,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
         <div className="space-y-4">
           {/* Simple Bar Chart */}
           <div className="flex items-end justify-between h-32 gap-2">
-            {data.map((item, _index) => {
+            {data?.map((item, _index) => {
               const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
               return (
                 <div key={item.month} className="flex flex-col items-center gap-2 flex-1">
@@ -79,7 +79,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
           
           {/* Legend */}
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {data.slice(-4).map((item) => (
+            {data?.slice(-4).map((item) => (
               <div key={item.month} className="flex justify-between">
                 <span className="text-foreground/60">{formatMonth(item.month)}:</span>
                 <span className="font-mono text-foreground">${item.formatted} USD</span>

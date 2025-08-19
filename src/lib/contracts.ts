@@ -1,6 +1,5 @@
 import { Address } from "viem";
-import { liskSepolia, morphHolesky } from "viem/chains";
-import { celoSepolia } from "./wagmi-config";
+
 import ProfileRegistryABI from "@/contracts/ProfileRegistry.json";
 import RelynkProcessorABI from "@/contracts/RelynkProcessor.json";
 
@@ -173,30 +172,35 @@ export const SUPPORTED_CHAINS = {
     name: "Lisk Sepolia",
     contracts: LISK_SEPOLIA_CONTRACTS,
     tokens: LISK_SEPOLIA_TOKENS,
+    blockExplorerUrl: "https://sepolia-blockscout.lisk.com",
   },
   scrollSepolia: {
     id: 534351,
     name: "Scroll Sepolia",
     contracts: SCROLL_SEPOLIA_CONTRACTS,
     tokens: SCROLL_SEPOLIA_TOKENS,
+    blockExplorerUrl: "https://sepolia.scrollscan.com",
   },
   morphHolesky: {
     id: 2810,
     name: "Morph Holesky",
     contracts: MORPH_HOLESKY_CONTRACTS,
     tokens: MORPH_HOLESKY_TOKENS,
+    blockExplorerUrl: "https://explorer-holesky.morphl2.io",
   },
   celoSepolia: {
     id: 11142220,
     name: "Celo Sepolia Testnet",
     contracts: CELO_SEPOLIA_CONTRACTS,
     tokens: CELO_SEPOLIA_TOKENS,
+    blockExplorerUrl: "https://explorer.celo.org/alfajores",
   },
    mantleSepoliaTestnet: {
     id: 5003,
     name: "Mantle Sepolia Testnet",
     contracts: MANTLE_SEPOLIA_CONTRACTS,
     tokens: MANTLE_SEPOLIA_TOKENS,
+    blockExplorerUrl: "https://explorer.sepolia.mantle.xyz",
   }
 } as const;
 
@@ -257,6 +261,18 @@ export function getChainConfig(chainId: number = 4202) {
       console.warn(`Unsupported chain ID: ${chainId}, falling back to Lisk Sepolia`);
       return SUPPORTED_CHAINS.liskSepolia;
   }
+}
+
+// Helper function to get block explorer URL for a specific chain
+export function getBlockExplorerUrl(chainId: number = 4202): string {
+  const chainConfig = getChainConfig(chainId);
+  return chainConfig.blockExplorerUrl;
+}
+
+// Helper function to get transaction URL for a specific chain
+export function getTransactionUrl(chainId: number, transactionHash: string): string {
+  const baseUrl = getBlockExplorerUrl(chainId);
+  return `${baseUrl}/tx/${transactionHash}`;
 }
 
 // Contract constants from the ProfileRegistry contract

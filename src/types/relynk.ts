@@ -67,6 +67,13 @@ export interface PaymentMetadata extends BaseMetadata {
   dueDate?: number;
   terms?: string;
   redirectUrl?: string;
+  contentUrl?: string; // For content access after payment
+  files?: Array<{
+    name: string;
+    size?: number;
+    type?: string;
+    url?: string; // IPFS hash or URL
+  }>; // For file access after payment
   successMessage?: string;
   customFields?: Record<string, string>;
 }
@@ -106,6 +113,12 @@ export interface ProductMetadata extends BaseMetadata {
   variants?: ProductVariant[];
   shipping: ShippingInfo;
   digitalDelivery: boolean;
+  files?: Array<{
+    name: string;
+    size?: number;
+    type?: string;
+    url?: string; // IPFS hash or URL
+  }>; // For digital products
   downloadInstructions?: string;
   returnPolicy?: string;
   warranty?: string;
@@ -173,6 +186,7 @@ export interface ContentMetadata extends BaseMetadata {
   };
   deliveryMethod: "encrypted_ipfs" | "email" | "download_link" | "access_token";
   encryptedContent?: string; // IPFS hash of encrypted actual content
+  contentUrl?: string; // Direct URL to access content online
   accessInstructions?: string;
   prerequisites?: string[];
   learningOutcomes?: string[]; // For courses
@@ -251,6 +265,7 @@ export interface PaymentRequest {
   message?: string;
   customAmount?: bigint; // For DYNAMIC amount types
   selectedVariant?: string; // For products with variants
+  buyerEmail?: string; // For content delivery
 }
 
 export interface PaymentResult {

@@ -59,6 +59,7 @@ export class MetadataCreator {
       dueDate: formData.paymentDetails?.dueDate,
       terms: formData.paymentDetails?.terms,
       redirectUrl: formData.redirectUrl,
+      contentUrl: formData.redirectUrl, // Map redirectUrl to contentUrl for content access
       successMessage:
         formData.successMessage || "Payment completed successfully!",
       customFields: formData.paymentDetails?.customFields || {},
@@ -137,6 +138,13 @@ export class MetadataCreator {
         shippingRegions: formData.shippingInfo?.shippingRegions,
       },
       digitalDelivery: formData.isDigitalDelivery || false,
+      files: formData.isDigitalDelivery ? [
+        {
+          name: formData.title || "Digital Product",
+          type: "application/octet-stream",
+          url: formData.redirectUrl, // Use redirectUrl as file access URL
+        }
+      ] : undefined,
       downloadInstructions: formData.productDetails?.downloadInstructions,
       returnPolicy: formData.productDetails?.returnPolicy,
       warranty: formData.productDetails?.warranty,
@@ -187,6 +195,7 @@ export class MetadataCreator {
       deliveryMethod:
         formData.contentDetails?.deliveryMethod || "encrypted_ipfs",
       encryptedContent: formData.contentDetails?.encryptedContent,
+      contentUrl: formData.redirectUrl, // Map redirectUrl to contentUrl for content access
       accessInstructions: formData.contentDetails?.accessInstructions,
       prerequisites: formData.contentDetails?.prerequisites || [],
       learningOutcomes: formData.contentDetails?.learningOutcomes || [],
