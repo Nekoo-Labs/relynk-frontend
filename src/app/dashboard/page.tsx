@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { DashboardWelcomeCard } from "@/components/dashboard-welcome-card";
 import { DashboardUsernameSetup } from "@/components/dashboard-username-setup";
 import { PaymentLinksDashboard } from "@/components/dashboard/payment-links-dashboard";
+import { GettingStartedSection } from "@/components/dashboard/getting-started-section";
 import { RevenueChart } from "@/components/charts/revenue-chart";
 import { LinkTypeChart } from "@/components/charts/link-type-chart";
 import { TopLinks } from "@/components/charts/top-links";
@@ -84,11 +85,8 @@ function DashboardContent() {
         <div className="flex flex-wrap gap-y-2 items-center justify-between">
           <div className="float-animation">
             <h1 className="text-3xl font-heading text-foreground">
-              💖 Welcome back, cutie!
+              💖 Welcome Relynk
             </h1>
-            <p className="text-foreground/60 mt-1">
-              Here&apos;s what&apos;s happening with your links today~ ✨
-            </p>
           </div>
           <div className="flex gap-2 flex-wrap">
             {hasProfile && (
@@ -136,6 +134,9 @@ function DashboardContent() {
             </Link>
           </div>
         )}
+
+        {/* Getting Started Section */}
+        <GettingStartedSection />
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

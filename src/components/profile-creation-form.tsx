@@ -104,6 +104,10 @@ export function ProfileCreationForm({
       }
     };
 
+    const getAmountTypeString = (amountType: any): 'FIXED' | 'DYNAMIC' => {
+      return amountType === 0 ? 'FIXED' : 'DYNAMIC';
+    };
+
     return {
       title: paymentLink.title,
       url: `${window.location.origin}/pay/${paymentLink.id}`,
@@ -112,6 +116,10 @@ export function ProfileCreationForm({
       isActive: paymentLink.isActive && !paymentLink.isExpired,
       order: formData.links.length,
       type: getTypeFromLinkType(paymentLink.linkType),
+      amount: paymentLink.amount,
+      amountType: getAmountTypeString(paymentLink.amountType),
+      tokenSymbol: paymentLink.tokenSymbol,
+      formattedAmount: paymentLink.formattedAmount,
     };
   };
 

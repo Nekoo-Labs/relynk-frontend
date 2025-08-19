@@ -1,8 +1,8 @@
 export default function Footer() {
   return (
-    <footer className="bg-foreground text-white min-h-40 flex items-center justify-center">
+    <footer className="bg-main text-white min-h-20 flex items-center justify-center">
       <div>
-        <p>© 2023 Lynk. All rights reserved.</p>
+        <p>© 2025 Lynk. All rights reserved.</p>
       </div>
     </footer>
   );

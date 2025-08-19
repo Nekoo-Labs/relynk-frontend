@@ -23,6 +23,11 @@ export interface ProfileLink {
   isActive: boolean;
   order: number;
   type: 'link' | 'payment' | 'donation' | 'product' | 'content';
+  // Amount information for payment-related links
+  amount?: string;
+  amountType?: 'FIXED' | 'DYNAMIC'; // Using string literals instead of enum for simplicity
+  tokenSymbol?: string;
+  formattedAmount?: string;
 }
 
 export interface SocialLinks {
