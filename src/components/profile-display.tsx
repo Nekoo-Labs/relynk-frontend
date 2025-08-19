@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ProfileData, ProfileLink } from "@/types/profile";
+import { PaymentLink } from "@/types/relynk";
+import { UnifiedIPFSService } from "@/lib/unified-ipfs-service";
 import {
   ExternalLink,
   Share2,
@@ -61,6 +63,7 @@ export function ProfileDisplay({
 }: ProfileDisplayProps) {
   const [copied, setCopied] = useState(false);
   const [_clickedLinks, setClickedLinks] = useState<Set<string>>(new Set());
+  const [linkAmountData, setLinkAmountData] = useState<Record<string, { amount: string; amountType: string; tokenSymbol: string; formattedAmount: string; previewImage?: string }>>({});
 
   const profileUrl = `${
     typeof window !== "undefined" ? window.location.origin : ""
@@ -75,6 +78,52 @@ export function ProfileDisplay({
       console.error("Failed to copy URL:", error);
     }
   };
+
+  // Extract payment link ID from URL
+  const extractPaymentLinkId = (url: string): string | null => {
+    const match = url.match(/\/pay\/([^/?]+)/);
+    return match ? match[1] : null;
+  };
+
+  // Fetch amount data for payment links that don't have it
+  useEffect(() => {
+    const fetchLinkAmountData = async () => {
+      const linksNeedingData = profileData.links.filter(link =>
+        (link.type === 'payment' || link.type === 'donation' || link.type === 'product' || link.type === 'content') &&
+        !link.amount &&
+        extractPaymentLinkId(link.url)
+      );
+
+      if (linksNeedingData.length === 0) return;
+
+      const amountData: Record<string, any> = {};
+
+      for (const link of linksNeedingData) {
+        const linkId = extractPaymentLinkId(link.url);
+        if (!linkId) continue;
+
+        try {
+          // Fetch payment link data using UnifiedIPFSService
+          const paymentLink = await UnifiedIPFSService.getPaymentLink(linkId);
+          if (paymentLink) {
+            amountData[link.id] = {
+              amount: paymentLink.amount,
+              amountType: paymentLink.amountType === 0 ? 'FIXED' : 'DYNAMIC',
+              tokenSymbol: paymentLink.tokenSymbol,
+              formattedAmount: paymentLink.formattedAmount,
+              previewImage: paymentLink.previewImage,
+            };
+          }
+        } catch (error) {
+          console.error(`Failed to fetch amount data for link ${linkId}:`, error);
+        }
+      }
+
+      setLinkAmountData(amountData);
+    };
+
+    fetchLinkAmountData();
+  }, [profileData.links]);
 
   const handleLinkClick = (link: ProfileLink) => {
     setClickedLinks((prev) => new Set([...prev, link.id]));
@@ -226,9 +275,53 @@ export function ProfileDisplay({
               onClick={() => handleLinkClick(link)}
             >
               <CardContent className="p-0">
+                {/* Preview Image Section for Product/Content */}
+                {(() => {
+                  const amountInfo = link.amount ? {
+                    previewImage: undefined, // existing links don't have preview images in profile data
+                  } : linkAmountData[link.id];
+
+                  const showPreviewImage = (link.type === 'product' || link.type === 'content') &&
+                                         amountInfo?.previewImage;
+
+                  if (showPreviewImage) {
+                    return (
+                      <div className="mb-3">
+                        <div className="w-full h-48 rounded-lg overflow-hidden bg-gray-100 relative">
+                          <Image
+                            src={`https://gateway.pinata.cloud/ipfs/${amountInfo.previewImage}`}
+                            alt={link.title}
+                            fill
+                            className="object-cover transition-opacity duration-200"
+                            onError={(e) => {
+                              // Hide the image container if it fails to load
+                              const target = e.target as HTMLElement;
+                              const container = target.parentElement;
+                              if (container) {
+                                container.style.display = 'none';
+                              }
+                            }}
+                            onLoad={(e) => {
+                              // Ensure image is visible when loaded
+                              const target = e.target as HTMLElement;
+                              target.style.opacity = '1';
+                            }}
+                            style={{ opacity: 0 }}
+                          />
+                          {/* Loading placeholder */}
+                          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                            <span className="text-4xl">{linkTypeEmojis[link.type]}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3 flex-1">
-                    {/* Link Type Badge */}
+                    {/* Type Badge */}
                     <div className="flex items-center gap-2">
                       <span className="text-lg">
                         {linkTypeEmojis[link.type]}
@@ -245,7 +338,36 @@ export function ProfileDisplay({
 
                     {/* Link Content */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">{link.title}</h3>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-semibold truncate">{link.title}</h3>
+                        {/* Amount Badge */}
+                        {(() => {
+                          // Use existing amount data or fetched amount data
+                          const amountInfo = link.amount ? {
+                            amount: link.amount,
+                            amountType: link.amountType,
+                            tokenSymbol: link.tokenSymbol,
+                            formattedAmount: link.formattedAmount,
+                          } : linkAmountData[link.id];
+
+                          if (!amountInfo || amountInfo.amount === '0') return null;
+
+                          return (
+                            <Badge
+                              className="text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
+                              style={{
+                                backgroundColor: profileData?.theme?.accentColor || '#3b82f6',
+                                color: '#ffffff'
+                              }}
+                            >
+                              {amountInfo.amountType === 'DYNAMIC'
+                                ? '💰 Custom'
+                                : `💳 ${amountInfo.formattedAmount || `${amountInfo.amount} ${amountInfo.tokenSymbol}`}`
+                              }
+                            </Badge>
+                          );
+                        })()}
+                      </div>
                       {link.description && (
                         <p className="text-sm opacity-75 truncate">
                           {link.description}

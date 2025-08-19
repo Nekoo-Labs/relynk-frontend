@@ -6,6 +6,7 @@ import { useSiweAuth } from "@/hooks/use-siwe-auth";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
+import Link from "next/link";
 
 export default function Navbar() {
   const { isAuthenticated, isLoading } = useSiweAuth();
@@ -26,6 +27,14 @@ export default function Navbar() {
           <CardTitle className="text-white">Relynk</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-3">
+          <Link href="/explorer">
+            <Button
+              variant="outline"
+              className="bg-white text-main shadow-rose-200 border-rose-200 border hover:scale-105 transition-all duration-300"
+            >
+              Explorer 🔍
+            </Button>
+          </Link>
           {showDashboardButton && (
             <Button
               onClick={handleDashboardClick}

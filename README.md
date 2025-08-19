@@ -50,6 +50,28 @@ Relynk brings the simplicity of traditional payment link services like Gumroad o
 - **Animations**: Framer Motion
 - **State Management**: TanStack Query
 
+## ✨ Features
+
+### 🎯 Getting Started Dashboard
+- **Interactive onboarding**: Step-by-step guidance for new users
+- **Progress tracking**: Visual progress indicators showing completion status
+- **Smart completion detection**: Automatically detects user progress based on real activity
+- **Animated illustrations**: Engaging visual elements to enhance user experience
+- **Collapsible interface**: Users can expand/collapse the getting started section
+
+### 🔍 Public Explorer
+- **Browse without wallet**: Explore all public payment links without connecting a wallet
+- **Search and filter**: Find links by title, creator, type, or description
+- **Real-time stats**: View platform statistics and trending content
+- **Secure payments**: Connect wallet only when ready to make transactions
+- **Link sharing**: Copy and share payment links easily
+
+### 🔗 Core Features
+- Create payment links for crypto transactions
+- Share links for easy payments
+- Track analytics and earnings
+- Manage user profiles and settings
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -111,6 +133,15 @@ Relynk brings the simplicity of traditional payment link services like Gumroad o
 - Feature showcase
 - How it works explanation
 - Social proof and testimonials
+
+### Explorer (`/explorer`)
+
+Public area accessible to everyone:
+
+- **Browse Links** - Discover payment links, products, and content from creators
+- **Search & Filter** - Find specific content by type, creator, or keywords
+- **Platform Stats** - View total links, creators, volume, and transactions
+- **Secure Payments** - Connect wallet only when ready to make transactions
 
 ### Dashboard (`/dashboard`)
 
